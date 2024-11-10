@@ -63,12 +63,18 @@ Notation computation := (ctree noop B02).
 
 Definition state := nat -> expr.
 
+Reserved Notation "[[ C ]]".
+
 Fixpoint denote (C : cl) (st: state) : computation state :=
   match C with
-    | Zero => Stuck
-    | One => Ret st
-    | Seq C1 C2 => st' <- denote C1 st ;; denote C2 st'
-    | Branch C1 C2 => br2 (denote C1 st) (denote C2 st)
-    (* | Star C' => denote (Branch One (Seq C' (Star C'))) st *)
-    | _ => Stuck
-  end.
+  | Zero => Stuck
+  | One => ret st
+  | Seq C1 C2 => [[ C1 ]] st >>= [[ C2 ]]
+  | Branch C1 C2 => br2 ([[ C1 ]] st) ([[ C2 ]] st)
+  | Star C' =>
+      iter (fun st' => br2
+                         (st'' <-  [[ C' ]] st' ;; ret (inl st''))
+                         (ret (inr st'))) st
+  | _ => Stuck (* TODO *)
+  end
+where "[[ C ]]" := (denote C).
