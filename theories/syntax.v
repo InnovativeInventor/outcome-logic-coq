@@ -57,6 +57,12 @@ Inductive cl : Type :=
 | Atom : cmd -> cl
 .
 
+Notation "𝟘" := Zero.
+Notation "𝟙" := One.
+Notation "C ⋆" := (Star C) (at level 60).
+Notation "C1 + C2" := (Branch C1 C2).
+Notation "C1 ⨟ C2" := (Seq C1 C2) (at level 80).
+
 Inductive weight : Type :=
 | Bool : bool -> weight
 | Unit : weight
@@ -65,77 +71,87 @@ Inductive weight : Type :=
 Inductive noop : Type -> Type :=
 | tt : noop unit.
 
-Notation computation := (ctree noop B02).
+Notation M := (ctree noop B02).
 
-Definition state := nat -> weight.
+Definition Σ := nat -> weight.
 
-Reserved Notation "[[ c ]]".
-Notation "x <<>> y" := (br2 x y) (at level 80).
-Notation "[0]" := Stuck.
-
-Definition insert (x : nat) (w : weight) (st : state) : state :=
+Definition insert (x : nat) (w : weight) (st : Σ) : Σ :=
   fun y => if Nat.eq_dec x y then w else st y.
 
-Definition denote_expr (e : expr) (st: state) : weight :=
+Definition denote_expr (e : expr) (st: Σ) : weight :=
   match e with
-    | Var x => st x
-    | True => Bool true
-    | False => Bool false
+  | Var x => st x
+  | True => Bool true
+  | False => Bool false
   end.
 
-
-Definition test_weight (w : weight) : bool :=
+Definition weight_to_bool (w : weight) : bool :=
   match w with
-    | Bool b => b
-    | Unit => false
+  | Bool b => b
+  | Unit => false
   end.
 
-Definition denote_cmd (c : cmd) (st: state) : computation state :=
+Notation "∅" := (Stuck : M Σ).
+
+Definition denote_cmd (c : cmd) (st: Σ) : M Σ :=
   match c with
-    | assume e => if test_weight (denote_expr e st) then ret st else [0]
-    | assign x e => ret (insert x (denote_expr e st) st)
+  | assume e =>
+      if weight_to_bool (denote_expr e st) then ret st else ∅
+  | assign x e => ret (insert x (denote_expr e st) st)
   end.
 
-Fixpoint denote (C : cl) (st: state) : computation state :=
+Reserved Notation "⟦ c ⟧".
+Notation "x ◇ y" := (br2 x y) (at level 60).
+
+Fixpoint denote (C : cl) (st : Σ) : M Σ :=
   match C with
-  | Zero => [0]
-  | One => ret st
-  | Seq C1 C2 => [[ C1 ]] st >>= [[ C2 ]]
-  | Branch C1 C2 => ([[ C1 ]] st) <<>> ([[ C2 ]] st)
-  | Star C' =>
-      iter (fun st' => (st'' <-  [[ C' ]] st' ;; ret (inl st''))
-                         <<>>
+  | 𝟘 => ∅
+  | 𝟙 => ret st
+  | C1 ⨟ C2 => ⟦ C1 ⟧ st >>= ⟦ C2 ⟧
+  | C1 + C2 => (⟦ C1 ⟧ st) ◇ (⟦ C2 ⟧ st)
+  | C ⋆ =>
+      iter (fun st' => (st'' <-  ⟦ C ⟧ st' ;; ret (inl st''))
+                         ◇
                        (ret (inr st'))) st
   | Atom cmd => denote_cmd cmd st
   end
-where "[[ C ]]" := (denote C).
-Notation "x + y" := (Branch x y).
-Notation "x ;;; y" := (Seq x y) (at level 80).
+where "⟦ C ⟧" := (denote C).
 
-Theorem monoid_identity_l :
-  forall (C : cl) (st: state) , [[ Zero + C ]] st ~ [[ C ]] st.
+Theorem monoid_identity_l (m : M Σ) :
+  ∅ ◇ m ~ m.
 Proof.
-  intros.
   apply br2_stuck_l.
 Qed.
 
-Theorem monoid_identity_r :
-  forall (C : cl) (st: state) , [[ C + Zero ]] st ~ [[ C ]] st.
+Theorem monoid_identity_r (m : M Σ) :
+  m ◇ ∅ ~ m.
 Proof.
-  intros.
   apply br2_stuck_r.
 Qed.
 
-Theorem monoid_commutative :
-    forall (C1 C2 : cl) (st: state) , [[ C1 + C2 ]] st ~ [[ C2 + C1 ]] st.
+Theorem monoid_commutative (m1 m2 : M Σ) :
+  m1 ◇ m2 ~ m2 ◇ m1.
 Proof.
   intros.
   apply br2_commut.
 Qed.
 
-Theorem monoid_respects_bind :
-  forall (C1 C2 K : cl) (st : state), [[ (C1 + C2);;; K ]] st ~ [[ (C1;;; K) + (C2;;; K) ]] st.
+Theorem monoid_addition_preserves_bind {A : Type} (m1 m2 : M Σ)
+  (k : Σ -> M Σ) :
+  (m1 ◇ m2) >>= k ~ (m1 >>= k) ◇ (m2 >>= k).
 Proof.
-  intros.
-  simpl.
-Admitted.
+  intros. apply equ_sbisim_subrelation.
+  - apply eq_equivalence.
+  - simpl. unfold "◇". rewrite bind_br.
+    apply br_equ. intros. destruct t; reflexivity.
+Qed.
+
+Print sb.
+
+Theorem monoid_identity_cancels_bind {A : Type} (k : Σ -> M Σ) :
+  ∅ >>= k ~ ∅.
+Proof.
+  intros. apply equ_sbisim_subrelation.
+  - apply eq_equivalence.
+  - apply bind_stuck.
+Qed.
