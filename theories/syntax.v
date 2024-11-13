@@ -71,8 +71,10 @@ Inductive weight : Type :=
 Inductive noop : Type -> Type :=
 | tt : noop unit.
 
+(* monad (comes with >>= and ret) *)
 Notation M := (ctree noop B02).
 
+(* state *)
 Definition Σ := nat -> weight.
 
 Definition insert (x : nat) (w : weight) (st : Σ) : Σ :=
@@ -91,7 +93,10 @@ Definition weight_to_bool (w : weight) : bool :=
   | Unit => false
   end.
 
+(* monoid identity *)
 Notation "∅" := (Stuck : M Σ).
+(* monoid addition *)
+Notation "x ◇ y" := (br2 x y) (at level 60).
 
 Definition denote_cmd (c : cmd) (st: Σ) : M Σ :=
   match c with
@@ -101,7 +106,6 @@ Definition denote_cmd (c : cmd) (st: Σ) : M Σ :=
   end.
 
 Reserved Notation "⟦ c ⟧".
-Notation "x ◇ y" := (br2 x y) (at level 60).
 
 Fixpoint denote (C : cl) (st : Σ) : M Σ :=
   match C with
@@ -136,7 +140,7 @@ Proof.
   apply br2_commut.
 Qed.
 
-Theorem monoid_addition_preserves_bind {A : Type} (m1 m2 : M Σ)
+Theorem monoid_addition_preserves_bind (m1 m2 : M Σ)
   (k : Σ -> M Σ) :
   (m1 ◇ m2) >>= k ~ (m1 >>= k) ◇ (m2 >>= k).
 Proof.
@@ -148,7 +152,7 @@ Qed.
 
 Print sb.
 
-Theorem monoid_identity_cancels_bind {A : Type} (k : Σ -> M Σ) :
+Theorem monoid_identity_cancels_bind (k : Σ -> M Σ) :
   ∅ >>= k ~ ∅.
 Proof.
   intros. apply equ_sbisim_subrelation.
