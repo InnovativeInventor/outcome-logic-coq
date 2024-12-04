@@ -40,8 +40,8 @@ Local Open Scope string_scope.
 (* expressions *)
 Inductive expr : Type :=
 | Var : nat -> expr
-| True : expr
-| False : expr
+| Tru : expr
+| Fals : expr
 .
 
 (* atomic commands *)
@@ -91,8 +91,8 @@ Definition insert (x : nat) (w : value) (σ : state) : state :=
 Definition denote_expr (e : expr) (σ : state) : value :=
   match e with
   | Var x => σ x
-  | True => Bool true
-  | False => Bool false
+  | Tru => Bool true
+  | Fals => Bool false
   end.
 
 Definition value_to_bool (v : value) : bool :=
@@ -162,3 +162,39 @@ Proof.
   - apply eq_equivalence.
   - apply bind_stuck.
 Qed.
+
+Inductive assertion : Type :=
+| Top : assertion
+| Bot : assertion
+| None : assertion
+| And : assertion -> assertion -> assertion
+| Or : assertion -> assertion -> assertion
+| Conj : assertion -> assertion -> assertion
+| Impl : assertion -> assertion -> assertion
+| Atomic : Prop -> assertion
+.
+
+Notation "⊤" := Top.
+Notation "⊥" := Bot.
+Notation "⊤⊕" := None.
+Notation "phi ∧ psi" := (And phi psi) (at level 80).
+Notation "phi ∨ psi" := (Or phi psi) (at level 80).
+Notation "phi ⊕ psi" := (Conj phi psi) (at level 80).
+Notation "phi ⇒ psi" := (Impl phi psi) (at level 80).
+
+Parameter sat_atom : computation state -> Prop -> Prop.
+
+Reserved Notation "m ⊨ phi" (at level 80).
+
+Fixpoint sat (m : computation state) (phi : assertion) : Prop :=
+  match phi with
+  | ⊤ => True
+  | ⊥ => False
+  | ⊤⊕ => m ≅ ∅
+  | phi ∧ psi => m ⊨ phi /\ m ⊨ psi
+  | phi ∨ psi => m ⊨ phi \/ m ⊨ psi
+  | phi ⊕ psi => exists m1 m2, m ≅ m1 ◇ m2 /\ m1 ⊨ phi /\ m2 ⊨ psi
+  | phi ⇒ psi => forall m', m' ≅ m -> m' ⊨ phi -> m' ⊨ psi
+  | Atomic P => sat_atom m P
+  end
+where "m ⊨ phi" := (sat m phi).
