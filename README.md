@@ -12,6 +12,7 @@ dependencies
 ```
 git clone git@github.com:vellvm/ctrees.git
 cd ctrees
+git checkout jfp
 opam install .
 ```
 
