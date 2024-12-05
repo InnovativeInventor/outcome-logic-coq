@@ -50,6 +50,8 @@ Inductive cmd : Type :=
 | assign : nat -> expr -> cmd
 .
 
+Notation "x <- e" := (assign x e) (at level 80).
+
 (* command language *)
 Inductive cl : Type :=
 | Zero
@@ -59,6 +61,8 @@ Inductive cl : Type :=
 | Star : cl -> cl
 | Atom : cmd -> cl
 .
+
+Coercion Atom : cmd >-> cl.
 
 Notation "𝟘" := Zero.
 Notation "𝟙" := One.
@@ -73,20 +77,20 @@ Inductive value : Type :=
 
 Definition state := nat -> value.
 
+(* TODO: use a concrete effect *)
 Parameter effect : Type -> Type.
 
+(* computation is a monad (>>= and ret already defined)  *
+ * and a monoid                                          *)
 Notation computation := (ctree effect B02).
-
-(* computation is a monad (>>= and ret already defined)
- * and a monoid *)
 
 (* monoid identity *)
 Notation "∅" := (Stuck : computation state).
 (* monoid addition *)
 Notation "x ◇ y" := (br2 x y) (at level 60).
 
-Definition insert (x : nat) (w : value) (σ : state) : state :=
-  fun y => if Nat.eq_dec x y then w else σ y.
+Definition insert (x : nat) (v : value) (σ : state) : state :=
+  fun y => if Nat.eq_dec x y then v else σ y.
 
 Definition denote_expr (e : expr) (σ : state) : value :=
   match e with
@@ -163,6 +167,11 @@ Proof.
   - apply bind_stuck.
 Qed.
 
+Inductive prop : Type :=
+| Sat
+| Unsat
+.
+
 Inductive assertion : Type :=
 | Top : assertion
 | Bot : assertion
@@ -171,8 +180,10 @@ Inductive assertion : Type :=
 | Or : assertion -> assertion -> assertion
 | Conj : assertion -> assertion -> assertion
 | Impl : assertion -> assertion -> assertion
-| Atomic : Prop -> assertion
+| Atomic : prop -> assertion
 .
+
+Coercion Atomic : prop >-> assertion.
 
 Notation "⊤" := Top.
 Notation "⊥" := Bot.
@@ -182,7 +193,12 @@ Notation "phi ∨ psi" := (Or phi psi) (at level 80).
 Notation "phi ⊕ psi" := (Conj phi psi) (at level 80).
 Notation "phi ⇒ psi" := (Impl phi psi) (at level 80).
 
-Parameter sat_atom : computation state -> Prop -> Prop.
+(* TODO: add more atomic propositions *)
+Definition sat_atom (m : computation state) (P : prop) : Prop :=
+  match P with
+  | Sat => True
+  | Unsat => False
+  end.
 
 Reserved Notation "m ⊨ phi" (at level 80).
 
@@ -190,11 +206,31 @@ Fixpoint sat (m : computation state) (phi : assertion) : Prop :=
   match phi with
   | ⊤ => True
   | ⊥ => False
-  | ⊤⊕ => m ≅ ∅
+  | ⊤⊕ => m ~ ∅
   | phi ∧ psi => m ⊨ phi /\ m ⊨ psi
   | phi ∨ psi => m ⊨ phi \/ m ⊨ psi
-  | phi ⊕ psi => exists m1 m2, m ≅ m1 ◇ m2 /\ m1 ⊨ phi /\ m2 ⊨ psi
-  | phi ⇒ psi => forall m', m' ≅ m -> m' ⊨ phi -> m' ⊨ psi
+  | phi ⊕ psi => exists m1 m2, m ~ m1 ◇ m2 /\ m1 ⊨ phi /\ m2 ⊨ psi
+  | phi ⇒ psi => forall m', m' ~ m -> m' ⊨ phi -> m' ⊨ psi
   | Atomic P => sat_atom m P
   end
 where "m ⊨ phi" := (sat m phi).
+
+Definition triple (phi : assertion) (C : cl) (psi : assertion) : Prop :=
+  forall (m : computation state), m ⊨ phi -> (m >>= ⟦ C ⟧) ⊨ psi.
+
+Notation "⊨ ⟨ phi ⟩ C ⟨ psi ⟩" := (triple phi C psi).
+
+Definition underapprox (phi : assertion) (C : cl) (psi : assertion) : Prop :=
+  triple phi C (psi ⊕ ⊤).
+
+Notation "⊨↓ ⟨ phi ⟩ C ⟨ psi ⟩" := (underapprox phi C psi).
+
+Definition pc (phi : assertion) (C : cl) (psi : assertion) : Prop :=
+  triple phi C (psi ⊕ ⊤⊕).
+
+Notation "⊨pc ⟨ phi ⟩ C ⟨ psi ⟩" := (pc phi C psi).
+
+Example ex : ⊨ ⟨ ⊤ ⟩ assume Tru ⟨ ⊤ ⟩.
+Proof.
+  intros ??. constructor.
+Qed.
