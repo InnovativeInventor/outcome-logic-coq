@@ -1,2 +1,6 @@
 -R theories OLCoq
 theories/syntax.v
+theories/semantics.v
+theories/ol.v
+theories/util.v
+theories/metatheory.v
