@@ -9,6 +9,12 @@ Lemma sat_respects_sb m m' phi :
   m ⊨ phi ->
   m' ⊨ phi.
 Proof.
+  intros Hsb Hsat. revert m' Hsb.
+  induction phi; intros; simpl in *; eauto.
+  - admit. (* need transitivity *)
+  - destruct Hsat as [Hsat1 Hsat2]. split.
+    + eapply IHphi1 in Hsat1; eassumption.
+    + eapply IHphi2 in Hsat2; eassumption.
 Admitted.
 
 Lemma sat_respects_equ m m' phi :
