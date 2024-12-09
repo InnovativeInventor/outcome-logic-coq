@@ -11,11 +11,19 @@ Lemma sat_respects_sb m m' phi :
 Proof.
   intros Hsb Hsat. revert m' Hsb.
   induction phi; intros; simpl in *; eauto.
-  - admit. (* need transitivity *)
+  - rewrite <- Hsb. assumption.
   - destruct Hsat as [Hsat1 Hsat2]. split.
     + eapply IHphi1 in Hsat1; eassumption.
     + eapply IHphi2 in Hsat2; eassumption.
-Admitted.
+  - destruct Hsat as [Hsat1 | Hsat2].
+    + left. eapply IHphi1 in Hsat1; eassumption.
+    + right. eapply IHphi2 in Hsat2; eassumption.
+  - destruct Hsat as [m1 [m2 [Hsb' [Hsat1 Hsat2]]]].
+    repeat eexists. rewrite <- Hsb. all: eassumption.
+  - intros m'' Hsb' Hsat1. apply Hsat.
+    rewrite Hsb'. rewrite Hsb. reflexivity.
+    assumption.
+Qed.
 
 Lemma sat_respects_equ m m' phi :
   m ≅ m' ->
@@ -26,18 +34,13 @@ Proof.
   eapply sat_respects_sb.
   apply equ_sbisim_subrelation.
   apply eq_equivalence.
-  apply H.
-  apply H0.
+  all: eassumption.
 Qed.
 
 Lemma rule_zero_sound phi :
   ⊨ ⟨ phi ⟩ 𝟘 ⟨ ⊤⊕ ⟩.
 Proof.
   intros ??.
-  unfold sat.
-  apply equ_sbisim_subrelation.
-  apply eq_equivalence.
-  simpl.
   (* maybe use is_stuck predicate here? *)
 Admitted.
 
@@ -46,9 +49,9 @@ Lemma rule_one_sound phi :
 Proof.
   intros ??. simpl.
   eapply sat_respects_sb.
-  - admit.
+  - rewrite bind_ret_r. reflexivity.
   - eassumption.
-Admitted.
+Qed.
 
 Theorem rules_sound phi C psi :
   ⊢ ⟨ phi ⟩ C ⟨ psi ⟩ ->
