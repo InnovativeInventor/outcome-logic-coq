@@ -84,7 +84,23 @@ Proof.
 Qed.
 
 Lemma rule_empty_sound C : ⊨ ⟨ ⊤⊕ ⟩ C ⟨ ⊤⊕ ⟩.
-Proof. Admitted.
+Proof.
+  intros.
+  unfold triple.
+  intros.
+  unfold sat in *.
+  simpl.
+  assert (is_stuck m).
+  rewrite H.
+  apply Stuck_is_stuck.
+  assert (is_stuck (CTree.bind m ⟦ C ⟧)).
+  apply is_stuck_bind.
+  apply H0.
+  epose proof (Stuck_is_stuck).
+  epose proof (is_stuck_sb (sbisim _) H1 H2).
+  erewrite H3.
+  auto.
+Qed.
 
 Lemma rule_true_sound phi C  : ⊨ ⟨ phi ⟩ C ⟨ ⊤ ⟩.
 Proof. intros ??. constructor. Qed.
