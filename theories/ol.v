@@ -1,7 +1,7 @@
 Unset Universe Checking.
 
+Require Import computation.
 Require Import semantics.
-Require Import util.
 
 Inductive prop : Type :=
 | Sat
@@ -65,11 +65,6 @@ Definition pc (phi : assertion) (C : cl) (psi : assertion) : Prop :=
   triple phi C (psi ⊕ ⊤⊕).
 
 Notation "⊨pc ⟨ phi ⟩ C ⟨ psi ⟩" := (pc phi C psi).
-
-Example ex : ⊨ ⟨ ⊤ ⟩ assume Tru ⟨ ⊤ ⟩.
-Proof.
-  intros ??. constructor.
-Qed.
 
 Reserved Notation "⊢ ⟨ phi ⟩ C ⟨ psi ⟩".
 

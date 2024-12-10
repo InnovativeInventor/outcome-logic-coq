@@ -1,9 +1,10 @@
 (* expressions *)
 Inductive expr : Type :=
 | Var : nat -> expr
-| Tru : expr
-| Fals : expr
+| Lit : nat -> expr
 .
+
+Coercion Lit : nat >-> expr.
 
 (* atomic commands *)
 Inductive cmd : Type :=

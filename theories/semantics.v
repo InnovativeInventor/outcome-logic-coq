@@ -1,6 +1,6 @@
 Unset Universe Checking.
 
-Require Import util.
+Require Import computation.
 Require Export syntax.
 
 Definition insert (x : nat) (v : value) (σ : state) : state :=
@@ -9,14 +9,13 @@ Definition insert (x : nat) (v : value) (σ : state) : state :=
 Definition denote_expr (e : expr) (σ : state) : value :=
   match e with
   | Var x => σ x
-  | Tru => Bool true
-  | Fals => Bool false
+  | Lit n => n
   end.
 
 Definition value_to_bool (v : value) : bool :=
   match v with
-  | Bool b => b
-  | Unit => false
+  | 0 => false
+  | _ => true
   end.
 
 Definition denote_cmd (c : cmd) (σ : state) : computation state :=
