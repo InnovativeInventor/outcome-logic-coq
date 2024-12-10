@@ -55,13 +55,23 @@ Lemma rule_seq_sound phi psi theta C1 C2 :
   ⊨ ⟨ phi ⟩ C1 ⟨ psi ⟩ ->
   ⊨ ⟨ psi ⟩ C2 ⟨ theta ⟩ ->
   ⊨ ⟨ phi ⟩ C1 ⨟ C2 ⟨ theta ⟩.
-Proof. Admitted.
+Proof.
+  intros H1 H2 ? Hsat.
+  eapply sat_respects_sb.
+  - simpl. rewrite <- bind_bind. reflexivity.
+  - specialize (H1 _ Hsat). specialize (H2 _ H1). assumption.
+Qed.
 
 Lemma rule_split_sound phi1 psi1 phi2 psi2 C :
   ⊨ ⟨ phi1 ⟩ C ⟨ psi1 ⟩ ->
   ⊨ ⟨ phi2 ⟩ C ⟨ psi2 ⟩ ->
   ⊨ ⟨ phi1 ⊕ phi2 ⟩ C ⟨ psi1 ⊕ psi2 ⟩.
-Proof. Admitted.
+Proof.
+  intros H1 H2 m [m1 [m2 [Hsb [Hsat1 Hsat2]]]].
+  specialize (H1 _ Hsat1). specialize (H2 _ Hsat2).
+  repeat eexists; try eassumption.
+  rewrite Hsb. apply monoid_addition_preserves_bind.
+Qed.
 
 Lemma rule_consequence_sound phi phi' psi psi' C :
   (forall m, m ⊨ phi ⇒ phi') ->
