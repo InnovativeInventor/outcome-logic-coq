@@ -74,31 +74,43 @@ Proof.
 Qed.
 
 Lemma rule_consequence_sound phi phi' psi psi' C :
-  (forall m, m ⊨ phi ⇒ phi') ->
+  (forall m, m ⊨ phi' ⇒ phi) ->
   ⊨ ⟨ phi ⟩ C ⟨ psi ⟩ ->
   (forall m, m ⊨ psi ⇒ psi') ->
   ⊨ ⟨ phi' ⟩ C ⟨ psi' ⟩.
-Proof. Admitted.
+Proof.
+  intros H1 H H2 ? Hsat. simpl in H1, H2.
+  eapply H1 in Hsat; eauto.
+Qed.
 
 Lemma rule_empty_sound C : ⊨ ⟨ ⊤⊕ ⟩ C ⟨ ⊤⊕ ⟩.
 Proof. Admitted.
 
 Lemma rule_true_sound phi C  : ⊨ ⟨ phi ⟩ C ⟨ ⊤ ⟩.
-Proof. Admitted.
+Proof. intros ??. constructor. Qed.
 
 Lemma rule_false_sound C phi : ⊨ ⟨ ⊥ ⟩ C ⟨ phi ⟩.
-Proof. Admitted.
+Proof. intros ??. inversion H. Qed.
 
 Lemma rule_plus_sound phi psi1 psi2 C1 C2 :
   ⊨ ⟨ phi ⟩ C1 ⟨ psi1 ⟩ ->
   ⊨ ⟨ phi ⟩ C2 ⟨ psi2 ⟩ ->
   ⊨ ⟨ phi ⟩ C1 + C2 ⟨ psi1 ⊕ psi2 ⟩.
-Proof. Admitted.
+Proof.
+  intros H1 H2 ? Hsat.
+  specialize (H1 _ Hsat). specialize (H2 _ Hsat).
+  simpl. repeat eexists; try eassumption.
+  (* TODO: is this goal true *)
+Admitted.
 
 Lemma rule_induction_sound phi psi C :
   ⊨ ⟨ phi ⟩ 𝟙 + C ⨟ C ⋆ ⟨ psi ⟩ ->
   ⊨ ⟨ phi ⟩ C ⟨ psi ⟩.
-Proof. Admitted.
+Proof.
+  intros H ? Hsat.
+  specialize (H _ Hsat).
+  (* TODO: this is the hard one... *)
+Admitted.
 
 Create HintDb sound_lemmas.
 

@@ -85,7 +85,7 @@ Inductive rules : assertion -> cl -> assertion -> Prop :=
   ⊢ ⟨ phi2 ⟩ C ⟨ psi2 ⟩ ->
   ⊢ ⟨ phi1 ⊕ phi2 ⟩ C ⟨ psi1 ⊕ psi2 ⟩
 | RuleConsequence phi phi' psi psi' C :
-  (forall m, m ⊨ phi ⇒ phi') ->
+  (forall m, m ⊨ phi' ⇒ phi) ->
   ⊢ ⟨ phi ⟩ C ⟨ psi ⟩ ->
   (forall m, m ⊨ psi ⇒ psi') ->
   ⊢ ⟨ phi' ⟩ C ⟨ psi' ⟩
