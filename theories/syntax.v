@@ -27,6 +27,6 @@ Coercion Atom : cmd >-> cl.
 
 Notation "𝟘" := Zero.
 Notation "𝟙" := One.
-Notation "C ⋆" := (Star C) (at level 60).
+Notation "C ⋆" := (Star C) (at level 30).
 Notation "C1 + C2" := (Branch C1 C2).
-Notation "C1 ⨟ C2" := (Seq C1 C2) (at level 80).  
+Notation "C1 ⨟ C2" := (Seq C1 C2) (at level 40).
