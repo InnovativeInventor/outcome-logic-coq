@@ -33,7 +33,28 @@ Lemma rule_seq_sound phi psi theta C1 C2 :
   ⊨ ⟨ phi ⟩ C1 ⟨ psi ⟩ ->
   ⊨ ⟨ psi ⟩ C2 ⟨ theta ⟩ ->
   ⊨ ⟨ phi ⟩ C1 ⨟ C2 ⟨ theta ⟩.
-Proof. Admitted.
+Proof.
+  intros ????.
+  eapply (eq_set_respects_sat ((s >>= ⟦ C1 ⟧) >>= ⟦ C2 ⟧)).
+  + solve_eq_set.
+    split.
+    - intros. simpgoal.
+      exists x1.
+      split.
+      * apply H2.
+      * eapply EvalSeq.
+        apply H4.
+        apply H3.
+    - intros. simpgoal.
+      inversion H3.
+      subst.
+      exists σ'.
+      split; eauto.
+  + unfold triple in *.
+    specialize (H s H1).
+    specialize (H0 _ H).
+    apply H0.
+Qed.
 
 Lemma rule_split_sound phi1 psi1 phi2 psi2 C :
   ⊨ ⟨ phi1 ⟩ C ⟨ psi1 ⟩ ->
