@@ -1,6 +1,20 @@
 Require Import semantics.
 Require Import set.
 Require Import ol.
+Require Import util.
+
+Lemma eq_set_respects_sat s s' phi :
+  s ≡ s' ->
+  s ⊨ phi ->
+  s' ⊨ phi.
+Proof.
+  revert s s'. induction phi; intros s s' Heq Hsat; simpgoal; eauto.
+  - intros ?. split; intros.
+    specialize (Heq x).
+     specialize (Hsat x).
+    simpgoal. solve_eq_set.
+  - repeat eexists; intros; try eassumption.
+Admitted.
 
 Lemma rule_zero_sound phi : ⊨ ⟨ phi ⟩ 𝟘 ⟨ ⊤⊕ ⟩.
 Proof.
