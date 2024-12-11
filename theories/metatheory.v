@@ -5,7 +5,29 @@ Require Import util.
 
 Ltac simp' :=
   match goal with
+  | [ H : _ ∈ (fun _ => (𝟙, _) ⇓ _) |- _ ] =>
+      inversion H; clear H
+  | [ H : _ ∈ (fun _ => (_ ⨟ (_ ⋆), _) ⇓ _) |- _ ] =>
+      idtac
+  | [ H : _ ∈ (fun _ => (_ ⨟ _, _) ⇓ _) |- _ ] =>
+      inversion H; clear H
   | [ H : _ ∈ (fun _ => (_ + _, _) ⇓ _) |- _ ] =>
+      inversion H; clear H
+  | [ H : _ ∈ (fun _ => (_ ⋆, _) ⇓ _) |- _ ] =>
+      inversion H; clear H
+  | [ H : _ ∈ (fun _ => (Atom _, _) ⇓ _) |- _ ] =>
+      inversion H; clear H
+  | [ H : (𝟙, _) ⇓ _ |- _ ] =>
+      inversion H; clear H
+  | [ H : (_ ⨟ (_ ⋆), _) ⇓ _ |- _ ] =>
+      idtac
+  | [ H : (_ ⨟ _, _) ⇓ _ |- _ ] =>
+      inversion H; clear H
+  | [ H : (_ + _, _) ⇓ _ |- _ ] =>
+      inversion H; clear H
+  | [ H : (_ ⋆, _) ⇓ _ |- _ ] =>
+      inversion H; clear H
+  | [ H : (Atom _, _) ⇓ _ |- _ ] =>
       inversion H; clear H
   | _ => simp
   end.
@@ -37,40 +59,36 @@ Proof.
 Qed.
 
 Lemma rule_one_sound phi : ⊨ ⟨ phi ⟩ 𝟙 ⟨ phi ⟩.
-Proof. Admitted.
+Proof.
+  intros ? Hsat. eapply eq_set_respects_sat; try eassumption.
+  split; intros H; repeat (simpgoal'; solve_eq_set).
+Qed.
 
 Lemma rule_seq_sound phi psi theta C1 C2 :
   ⊨ ⟨ phi ⟩ C1 ⟨ psi ⟩ ->
   ⊨ ⟨ psi ⟩ C2 ⟨ theta ⟩ ->
   ⊨ ⟨ phi ⟩ C1 ⨟ C2 ⟨ theta ⟩.
 Proof.
-  intros ????.
-  eapply (eq_set_respects_sat ((s >>= ⟦ C1 ⟧) >>= ⟦ C2 ⟧)).
-  + solve_eq_set.
-    split.
-    - intros. simpgoal.
-      exists x1.
-      split.
-      * apply H2.
-      * eapply EvalSeq.
-        apply H4.
-        apply H3.
-    - intros. simpgoal.
-      inversion H3.
-      subst.
-      exists σ'.
-      split; eauto.
-  + unfold triple in *.
-    specialize (H s H1).
-    specialize (H0 _ H).
-    apply H0.
+  intros H1 H2 ??.
+  eapply eq_set_respects_sat.
+  2: { apply H2. apply H1. apply H. }
+  split; intros; solve_eq_set; simpgoal'.
 Qed.
 
 Lemma rule_split_sound phi1 psi1 phi2 psi2 C :
   ⊨ ⟨ phi1 ⟩ C ⟨ psi1 ⟩ ->
   ⊨ ⟨ phi2 ⟩ C ⟨ psi2 ⟩ ->
   ⊨ ⟨ phi1 ⊕ phi2 ⟩ C ⟨ psi1 ⊕ psi2 ⟩.
-Proof. Admitted.
+Proof.
+  intros H1 H2 ? [s1 [s2 [Heq [Hsat1 Hsat2]]]].
+  exists (s1 >>= ⟦ C ⟧), (s2 >>= ⟦ C ⟧). repeat split; simpgoal.
+  - destruct H as [? [Hin1 ?]]. apply Heq in Hin1. destruct Hin1.
+    + left. repeat eexists; eassumption.
+    + right. repeat eexists; eassumption.
+  - destruct H as [H | H]; destruct H as [? [? ?]].
+    + repeat eexists. apply Heq. left. all: eassumption.
+    + repeat eexists. apply Heq. right. all: eassumption.
+Qed.
 
 Lemma rule_consequence_sound phi phi' psi psi' C :
   (forall m, m ⊨ phi' ⇒ phi) ->
