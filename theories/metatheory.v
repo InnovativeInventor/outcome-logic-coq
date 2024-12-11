@@ -3,6 +3,16 @@ Require Import set.
 Require Import ol.
 Require Import util.
 
+Ltac simp' :=
+  match goal with
+  | [ H : _ ∈ (fun _ => (_ + _, _) ⇓ _) |- _ ] =>
+      inversion H; clear H
+  | _ => simp
+  end.
+
+Ltac simpgoal' :=
+  repeat (unfold bind, outputs, triple in *; simpl in *; simp').
+
 Lemma eq_set_respects_sat s s' phi :
   s ≡ s' ->
   s ⊨ phi ->
@@ -82,7 +92,18 @@ Lemma rule_plus_sound phi psi1 psi2 C1 C2 :
   ⊨ ⟨ phi ⟩ C1 ⟨ psi1 ⟩ ->
   ⊨ ⟨ phi ⟩ C2 ⟨ psi2 ⟩ ->
   ⊨ ⟨ phi ⟩ C1 + C2 ⟨ psi1 ⊕ psi2 ⟩.
-Proof. Admitted.
+Proof.
+  intros H1 H2. intros ? Hsat. simpl.
+  exists (s >>= ⟦ C1 ⟧). exists (s >>= ⟦ C2 ⟧).
+  repeat split; intros; simpgoal'.
+  - left. eauto.
+  - right. eauto.
+  - destruct H; simpgoal'.
+    + repeat eexists. eauto using eval.
+      apply EvalBr1. eassumption.
+    + repeat eexists. eauto using eval.
+      apply EvalBr2. eassumption.
+Qed.
 
 Lemma rule_induction_sound phi psi C :
   ⊨ ⟨ phi ⟩ 𝟙 + C ⨟ C ⋆ ⟨ psi ⟩ ->
