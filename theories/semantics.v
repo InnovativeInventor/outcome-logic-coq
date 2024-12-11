@@ -47,3 +47,6 @@ Inductive eval : (cl * state) -> state -> Prop :=
   eval_cmd c σ σ' ->
   (Atom c , σ) ⇓ σ'
 where "x ⇓ y" := (eval x y).
+
+Hint Resolve EvalOne EvalSeq EvalBr1 EvalBr2
+  EvalStar0 EvalStar1 EvalCmd : core.
