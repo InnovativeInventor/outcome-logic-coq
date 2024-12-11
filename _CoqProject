@@ -4,3 +4,4 @@ theories/semantics.v
 theories/ol.v
 theories/metatheory.v
 theories/set.v
+theories/util.v
