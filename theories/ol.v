@@ -1,7 +1,5 @@
-Unset Universe Checking.
-
-Require Import computation.
 Require Import semantics.
+Require Import set.
 
 Inductive prop : Type :=
 | Sat
@@ -30,29 +28,34 @@ Notation "phi ⊕ psi" := (Conj phi psi) (at level 60).
 Notation "phi ⇒ psi" := (Impl phi psi) (at level 70).
 
 (* TODO: add more atomic propositions *)
-Definition sat_atom (m : computation state) (P : prop) : Prop :=
+Definition sat_atom (s : set state) (P : prop) : Prop :=
   match P with
   | Sat => True
   | Unsat => False
   end.
 
-Reserved Notation "m ⊨ phi" (at level 80).
+Reserved Notation "s ⊨ phi" (at level 80).
 
-Fixpoint sat (m : computation state) (phi : assertion) : Prop :=
+Fixpoint sat (s : set state) (phi : assertion) : Prop :=
   match phi with
   | ⊤ => True
   | ⊥ => False
-  | ⊤⊕ => m ~ ∅
-  | phi ∧ psi => m ⊨ phi /\ m ⊨ psi
-  | phi ∨ psi => m ⊨ phi \/ m ⊨ psi
-  | phi ⊕ psi => exists m1 m2, m ~ m1 ◇ m2 /\ m1 ⊨ phi /\ m2 ⊨ psi
-  | phi ⇒ psi => forall m', m' ~ m -> m' ⊨ phi -> m' ⊨ psi
-  | Atomic P => sat_atom m P
+  | ⊤⊕ => s ≡ ∅
+  | phi ∧ psi => s ⊨ phi /\ s ⊨ psi
+  | phi ∨ psi => s ⊨ phi \/ s ⊨ psi
+  | phi ⊕ psi => exists s1 s2, s ≡ s1 ◇ s2 /\ s ⊨ phi /\ s ⊨ psi
+  | phi ⇒ psi => forall s', s ≡ s' -> s ⊨ phi -> s ⊨ psi
+  | Atomic P => sat_atom s P
   end
 where "m ⊨ phi" := (sat m phi).
 
+Definition outputs (C : cl) (σ : state) : set state :=
+  fun σ' => (C , σ) ⇓ σ'.
+
+Notation "⟦ C ⟧" := (outputs C).
+
 Definition triple (phi : assertion) (C : cl) (psi : assertion) : Prop :=
-  forall (m : computation state), m ⊨ phi -> (m >>= ⟦ C ⟧) ⊨ psi.
+  forall s, s ⊨ phi -> (s >>= ⟦ C ⟧) ⊨ psi.
 
 Notation "⊨ ⟨ phi ⟩ C ⟨ psi ⟩" := (triple phi C psi).
 

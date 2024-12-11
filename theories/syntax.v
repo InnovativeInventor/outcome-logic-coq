@@ -31,3 +31,6 @@ Notation "𝟙" := One.
 Notation "C ⋆" := (Star C) (at level 30).
 Notation "C1 + C2" := (Branch C1 C2).
 Notation "C1 ⨟ C2" := (Seq C1 C2) (at level 40).
+
+Declare Scope cl.
+Delimit Scope cl with cl.
