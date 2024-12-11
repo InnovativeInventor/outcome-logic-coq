@@ -9,12 +9,15 @@ Lemma eq_set_respects_sat s s' phi :
   s' ⊨ phi.
 Proof.
   revert s s'. induction phi; intros s s' Heq Hsat; simpgoal; eauto.
-  - intros ?. split; intros.
-    specialize (Heq x).
-     specialize (Hsat x).
-    simpgoal. solve_eq_set.
+  - intros ?. split; intros. specialize (Heq x).
+    specialize (Hsat x). simpgoal. solve_eq_set.
   - repeat eexists; intros; try eassumption.
-Admitted.
+    + apply H. apply Heq. assumption.
+    + unfold "◇" in *. simpgoal.
+      * solve_eq_set. apply Heq. apply H. left. assumption.
+      * solve_eq_set. apply Heq. apply H. right. assumption.
+  - apply Hsat; eauto with sets.
+Qed.
 
 Lemma rule_zero_sound phi : ⊨ ⟨ phi ⟩ 𝟘 ⟨ ⊤⊕ ⟩.
 Proof.
