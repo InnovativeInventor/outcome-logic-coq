@@ -43,8 +43,8 @@ Fixpoint sat (s : set state) (phi : assertion) : Prop :=
   | ⊤⊕ => s ≡ ∅
   | phi ∧ psi => s ⊨ phi /\ s ⊨ psi
   | phi ∨ psi => s ⊨ phi \/ s ⊨ psi
-  | phi ⊕ psi => exists s1 s2, s ≡ s1 ◇ s2 /\ s ⊨ phi /\ s ⊨ psi
-  | phi ⇒ psi => forall s', s ≡ s' -> s ⊨ phi -> s ⊨ psi
+  | phi ⊕ psi => exists s1 s2, s ≡ s1 ◇ s2 /\ s1 ⊨ phi /\ s2 ⊨ psi
+  | phi ⇒ psi => forall s', s ≡ s' -> s' ⊨ phi -> s' ⊨ psi
   | Atomic P => sat_atom s P
   end
 where "m ⊨ phi" := (sat m phi).
