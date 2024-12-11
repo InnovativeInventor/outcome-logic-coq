@@ -32,6 +32,23 @@ Notation "s >>= f" := (bind s f) (at level 70).
 Ltac solve_eq_set :=
   repeat (progress (unfold ret, "∅", "∈", "◇", bind, "≡" in *; simpgoal)).
 
+Lemma eq_set_trans `{X : Type} (s1 s2 s3 : set X) :
+  s1 ≡ s2 ->
+  s2 ≡ s3 ->
+  s1 ≡ s3.
+Proof.
+  intros Heq1 Heq2 ?. split; intros ?; solve_eq_set.
+  all: specialize (Heq1 x); specialize (Heq2 x); simpgoal.
+Qed.
+
+Lemma eq_set_symm `{X : Type} (s1 s2 : set X) :
+  s1 ≡ s2 ->
+  s2 ≡ s1.
+Proof.
+  intros Heq ?. split; intros ?; solve_eq_set.
+  all: specialize (Heq x); solve_eq_set.
+Qed.
+
 Lemma bind_ret_r `{X : Type} (s : set X) : (s >>= ret) ≡ s.
 Proof. intros ?. split; intros ?; solve_eq_set. Qed.
 
@@ -51,3 +68,9 @@ Proof. intros ?. split; intros ?; solve_eq_set. Qed.
 
 Lemma empty_cancels_bind `{X : Type} (k : X -> set X) : ∅ >>= k ≡ ∅.
 Proof. intros ?. split; intros ?; solve_eq_set. Qed.
+
+
+Create HintDb sets.
+
+Hint Resolve eq_set_trans eq_set_symm bind_ret_r bind_ret_l bind_assoc
+  union_comm union_preserves_bind empty_cancels_bind : sets.
