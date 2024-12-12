@@ -35,12 +35,12 @@ Ltac simp' :=
 Ltac simpgoal' :=
   repeat (unfold bind, outputs, triple in *; simpl in *; simp').
 
-Lemma eq_set_respects_sat s s' phi :
-  s ≡ s' ->
-  s ⊨ phi ->
-  s' ⊨ phi.
+Lemma eq_set_respects_sat S S' phi :
+  S ≡ S' ->
+  S ⊨ phi ->
+  S' ⊨ phi.
 Proof.
-  revert s s'. induction phi; intros s s' Heq Hsat; simpgoal; eauto.
+  revert S S'. induction phi; intros S S' Heq Hsat; simpgoal; eauto.
   - intros ?. split; intros. specialize (Heq x).
     specialize (Hsat x). simpgoal. solve_eq_set.
   - repeat eexists; intros; try eassumption.
@@ -53,7 +53,7 @@ Qed.
 
 Lemma rule_zero_sound phi : ⊨ ⟨ phi ⟩ 𝟘 ⟨ ⊤⊕ ⟩.
 Proof.
-  intros s ? σ. split.
+  intros S ? σ. split.
   - intros H'. destruct H' as [? [? Hc]]. inversion Hc.
   - intros Hc. inversion Hc.
 Qed.
@@ -91,9 +91,9 @@ Proof.
 Qed.
 
 Lemma rule_consequence_sound phi phi' psi psi' C :
-  (forall s, s ⊨ phi' ⇒ phi) ->
+  (forall S, S ⊨ phi' ⇒ phi) ->
   ⊨ ⟨ phi ⟩ C ⟨ psi ⟩ ->
-  (forall s, s ⊨ psi ⇒ psi') ->
+  (forall S, S ⊨ psi ⇒ psi') ->
   ⊨ ⟨ phi' ⟩ C ⟨ psi' ⟩.
 Proof.
   intros H1 H H2 ? Hsat. eapply H2.
@@ -120,7 +120,7 @@ Lemma rule_plus_sound phi psi1 psi2 C1 C2 :
   ⊨ ⟨ phi ⟩ C1 + C2 ⟨ psi1 ⊕ psi2 ⟩.
 Proof.
   intros H1 H2. intros ? Hsat. simpl.
-  exists (s >>= ⟦ C1 ⟧). exists (s >>= ⟦ C2 ⟧).
+  exists (S >>= ⟦ C1 ⟧). exists (S >>= ⟦ C2 ⟧).
   repeat split; intros; simpgoal'.
   - left. eauto.
   - right. eauto.

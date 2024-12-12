@@ -2,30 +2,30 @@ Require Import util.
 
 Definition set (X : Type) := X -> Prop.
 
-Definition eq_set `{X : Type} (s1 : set X) (s2 : set X) : Prop :=
-  forall x, s1 x <-> s2 x.
+Definition eq_set `{X : Type} (S1 : set X) (S2 : set X) : Prop :=
+  forall x, S1 x <-> S2 x.
 
-Notation "s1 ≡ s2" := (eq_set s1 s2) (at level 80).
+Notation "S1 ≡ S2" := (eq_set S1 S2) (at level 80).
 
 Definition empty `{X : Type} : set X :=
   fun _ => False.
 
-Definition member `{X : Type} (x : X) (s : set X) := s x.
+Definition member `{X : Type} (x : X) (S : set X) := S x.
 
-Notation "x ∈ s" := (member x s) (at level 80).
+Notation "x ∈ S" := (member x S) (at level 80).
 
 Notation "∅" := empty.
 
-Definition union `{X : Type} (s1 : set X) (s2 : set X) : set X :=
-  fun x => s1 x \/ s2 x.
+Definition union `{X : Type} (S1 : set X) (S2 : set X) : set X :=
+  fun x => S1 x \/ S2 x.
 
-Notation "s1 ◇ s2" := (union s1 s2) (at level 70).
+Notation "S1 ◇ S2" := (union S1 S2) (at level 70).
 
 Definition ret `{X : Type} (x : X) : set X :=
   fun x' => x = x'.
 
-Definition bind `{X : Type} (s : set X) (f : X -> set X) : set X :=
-  fun x => exists x', x' ∈ s /\ x ∈ f x'.
+Definition bind `{X : Type} (S : set X) (f : X -> set X) : set X :=
+  fun x => exists x', x' ∈ S /\ x ∈ f x'.
 
 Notation "s >>= f" := (bind s f) (at level 70).
 
@@ -33,52 +33,52 @@ Ltac simp_eq_set_goal := unfold ret, "∅", "∈", "◇", bind, "≡" in *; simp
 
 Ltac solve_eq_set_base:= repeat (progress simp_eq_set_goal).
 
-Lemma eq_set_refl `{X : Type} (s : set X) : s ≡ s.
+Lemma eq_set_refl `{X : Type} (S : set X) : S ≡ S.
 Proof.
   intros ?. split; intros ?; solve_eq_set_base.
 Qed.
 
-Lemma eq_set_trans `{X : Type} (s1 s2 s3 : set X) :
-  s1 ≡ s2 ->
-  s2 ≡ s3 ->
-  s1 ≡ s3.
+Lemma eq_set_trans `{X : Type} (S1 S2 S3 : set X) :
+  S1 ≡ S2 ->
+  S2 ≡ S3 ->
+  S1 ≡ S3.
 Proof.
   intros Heq1 Heq2 ?. split; intros ?; solve_eq_set_base.
   all: specialize (Heq1 x); specialize (Heq2 x); simpgoal.
 Qed.
 
-Lemma eq_set_symm `{X : Type} (s1 s2 : set X) :
-  s1 ≡ s2 ->
-  s2 ≡ s1.
+Lemma eq_set_symm `{X : Type} (S1 S2 : set X) :
+  S1 ≡ S2 ->
+  S2 ≡ S1.
 Proof.
   intros Heq ?. split; intros ?; solve_eq_set_base.
   all: specialize (Heq x); solve_eq_set_base.
 Qed.
 
-Lemma bind_ret_r `{X : Type} (s : set X) : (s >>= ret) ≡ s.
+Lemma bind_ret_r `{X : Type} (S : set X) : (S >>= ret) ≡ S.
 Proof. intros ?. split; intros ?; solve_eq_set_base. Qed.
 
 Lemma bind_ret_l `{X : Type} (x : X) f : (ret x >>= f) ≡ f x.
 Proof. intros ?. split; intros ?; solve_eq_set_base. Qed.
     
-Lemma bind_assoc `{X : Type} (s : set X) f g :
-  (s >>= f) >>= g ≡ s >>= (fun x => f x >>= g).
+Lemma bind_assoc `{X : Type} (S : set X) f g :
+  (S >>= f) >>= g ≡ S >>= (fun x => f x >>= g).
 Proof. intros ?. split; intros ?; solve_eq_set_base. Qed.
 
-Lemma union_comm `{X : Type} (s1 s2 : set X) : s1 ◇ s2 ≡ s2 ◇ s1.
+Lemma union_comm `{X : Type} (S1 S2 : set X) : S1 ◇ S2 ≡ S2 ◇ S1.
 Proof. intros ?. split; intros ?; solve_eq_set_base. Qed.
 
-Lemma union_preserves_bind `{X : Type} (s1 s2 : set X) k :
-  (s1 ◇ s2) >>= k ≡ (s1 >>= k) ◇ (s2 >>= k).
+Lemma union_preserves_bind `{X : Type} (S1 S2 : set X) k :
+  (S1 ◇ S2) >>= k ≡ (S1 >>= k) ◇ (S2 >>= k).
 Proof. intros ?. split; intros ?; solve_eq_set_base. Qed.
 
 Lemma empty_cancels_bind `{X : Type} (k : X -> set X) : ∅ >>= k ≡ ∅.
 Proof. intros ?. split; intros ?; solve_eq_set_base. Qed.
 
-Lemma cong_bind `{X : Type} (s s' : set X) (k k' : X -> set X) :
-  s ≡ s' ->
+Lemma cong_bind `{X : Type} (S S' : set X) (k k' : X -> set X) :
+  S ≡ S' ->
   (forall x, k x ≡ k' x) ->
-  s >>= k ≡ s' >>= k'.
+  S >>= k ≡ S' >>= k'.
 Proof.
   intros Heq1 Heq2 ?. split; intros ?; solve_eq_set_base;
     repeat eexists; (apply Heq1 || apply Heq2); eassumption.

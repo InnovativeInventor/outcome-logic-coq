@@ -28,26 +28,26 @@ Notation "phi ⊕ psi" := (Conj phi psi) (at level 60).
 Notation "phi ⇒ psi" := (Impl phi psi) (at level 70).
 
 (* TODO: add more atomic propositions *)
-Definition sat_atom (s : set state) (P : prop) : Prop :=
+Definition sat_atom (S : set state) (P : prop) : Prop :=
   match P with
   | Sat => True
   | Unsat => False
   end.
 
-Reserved Notation "s ⊨ phi" (at level 80).
+Reserved Notation "S ⊨ phi" (at level 80).
 
-Fixpoint sat (s : set state) (phi : assertion) : Prop :=
+Fixpoint sat (S : set state) (phi : assertion) : Prop :=
   match phi with
   | ⊤ => True
   | ⊥ => False
-  | ⊤⊕ => s ≡ ∅
-  | phi ∧ psi => s ⊨ phi /\ s ⊨ psi
-  | phi ∨ psi => s ⊨ phi \/ s ⊨ psi
-  | phi ⊕ psi => exists s1 s2, s ≡ s1 ◇ s2 /\ s1 ⊨ phi /\ s2 ⊨ psi
-  | phi ⇒ psi => forall s', s ≡ s' -> s' ⊨ phi -> s' ⊨ psi
-  | Atomic P => sat_atom s P
+  | ⊤⊕ => S ≡ ∅
+  | phi ∧ psi => S ⊨ phi /\ S ⊨ psi
+  | phi ∨ psi => S ⊨ phi \/ S ⊨ psi
+  | phi ⊕ psi => exists S1 S2, S ≡ S1 ◇ S2 /\ S1 ⊨ phi /\ S2 ⊨ psi
+  | phi ⇒ psi => forall S', S ≡ S' -> S' ⊨ phi -> S' ⊨ psi
+  | Atomic P => sat_atom S P
   end
-where "m ⊨ phi" := (sat m phi).
+where "S ⊨ phi" := (sat S phi).
 
 Definition outputs (C : cl) (σ : state) : set state :=
   fun σ' => (C , σ) ⇓ σ'.
@@ -55,7 +55,7 @@ Definition outputs (C : cl) (σ : state) : set state :=
 Notation "⟦ C ⟧" := (outputs C).
 
 Definition triple (phi : assertion) (C : cl) (psi : assertion) : Prop :=
-  forall s, s ⊨ phi -> (s >>= ⟦ C ⟧) ⊨ psi.
+  forall S, S ⊨ phi -> (S >>= ⟦ C ⟧) ⊨ psi.
 
 Notation "⊨ ⟨ phi ⟩ C ⟨ psi ⟩" := (triple phi C psi).
 
@@ -83,9 +83,9 @@ Inductive rules : assertion -> cl -> assertion -> Prop :=
   ⊢ ⟨ phi2 ⟩ C ⟨ psi2 ⟩ ->
   ⊢ ⟨ phi1 ⊕ phi2 ⟩ C ⟨ psi1 ⊕ psi2 ⟩
 | RuleConsequence phi phi' psi psi' C :
-  (forall m, m ⊨ phi' ⇒ phi) ->
+  (forall S, S ⊨ phi' ⇒ phi) ->
   ⊢ ⟨ phi ⟩ C ⟨ psi ⟩ ->
-  (forall m, m ⊨ psi ⇒ psi') ->
+  (forall S, S ⊨ psi ⇒ psi') ->
   ⊢ ⟨ phi' ⟩ C ⟨ psi' ⟩
 | RuleEmpty C : ⊢ ⟨ ⊤⊕ ⟩ C ⟨ ⊤⊕ ⟩
 | RuleTrue phi C : ⊢ ⟨ phi ⟩ C ⟨ ⊤ ⟩
