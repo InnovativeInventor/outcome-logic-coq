@@ -96,5 +96,5 @@ Inductive rules : assertion -> cl -> assertion -> Prop :=
   ⊢ ⟨ phi ⟩ C1 + C2 ⟨ psi1 ⊕ psi2 ⟩
 | RuleInduction phi psi C :
   ⊢ ⟨ phi ⟩ 𝟙 + C ⨟ C ⋆ ⟨ psi ⟩ ->
-  ⊢ ⟨ phi ⟩ C ⟨ psi ⟩
+  ⊢ ⟨ phi ⟩ C ⋆ ⟨ psi ⟩
 where "⊢ ⟨ phi ⟩ C ⟨ psi ⟩" := (rules phi C psi).
