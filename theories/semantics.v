@@ -1,27 +1,73 @@
 From Coq Require Import Arith.PeanoNat.
 
 Require Export syntax.
+Require Import vec.
 
-Definition value := nat.
+Definition value := option nat.
 
-Definition state := nat -> value.
+Definition stack := nat -> value.
+Definition heap := { n & vec n nat }.
 
-Definition insert (x : nat) (v : value) (σ : state) : state :=
-  fun y => if Nat.eq_dec x y then v else σ y.
+Definition newptr (h : heap) : heap * nat :=
+  match h with
+  | existT _ n l => (existT _ (S n) (append l 0) , n)
+  end.
 
-Definition expr_to_value (e : expr) (σ : state) : value :=
+Definition read (h : heap) (n : nat) : value :=
+  match h with
+  | existT _ n l => lookup l n
+  end.
+
+Definition state := ((stack * heap) + unit)%type.
+
+Definition good_state (s : stack) (h : heap) : state := inl (s , h).
+
+Notation "<{ s , h }>" := (good_state s h).
+
+Definition mem_err : state := inr tt.
+
+Notation "'err'" := mem_err.
+
+Definition insert (x : nat) (v : value) (s : stack) : stack :=
+  fun y => if Nat.eq_dec x y then v else s y.
+
+Definition eval_expr (e : expr) (s : stack) : value :=
   match e with
-  | Var x => σ x
-  | Lit n => n
+  | Var x => s x
+  | Lit n => Some n
+  | Null => None
   end.
 
 Inductive eval_cmd : cmd -> state -> state -> Prop :=
-| EvalAssume e σ :
-  expr_to_value e σ > 0 ->
-  eval_cmd (assume e) σ σ
-| EvalAssign x e σ σ' :
-  σ' = insert x (expr_to_value e σ) σ ->
-  eval_cmd (x <- e) σ σ'
+| EvalAssume e s h n :
+  eval_expr e s = Some n ->
+  n > 0 ->
+  eval_cmd e <{s, h}> <{s, h}>
+| EvalNot e s h n :
+  eval_expr e s = Some n ->
+  n = 0 ->
+  eval_cmd e <{s, h}> <{s, h}>
+| EvalAssign x e s s' h :
+  s' = insert x (eval_expr e s) s ->
+  eval_cmd (x <- e) <{s, h}> <{s', h}>
+| EvalAlloc x s s' h h' n :
+  (h' , n) = newptr h ->
+  s' = insert x (Some n) s ->
+  eval_cmd (x <- alloc) <{s, h}> <{s', h'}>
+| EvalRead x e s s' h n n' :
+  eval_expr e s = Some n ->
+  read h n = Some n' ->
+  s' = insert x (Some n') s ->
+  eval_cmd (x <- [ e ]) <{s, h}> <{s', h}>
+| EvalReadNull x e s h :
+  eval_expr e s = None ->
+  eval_cmd (x <- [ e ]) <{s, h}> err
+| EvalReadInvalidPtr x e s h n :
+  (* todo: change heap to nat -> nat OR change heap to finite map *)
+  eval_expr e s = Some n ->
+  read h n = None ->
+  eval_cmd (x <- [ e ]) <{s, h}> err
+(* TODO: eval write, eval write error *)
 .
 
 Reserved Notation "x ⇓ y" (at level 80).

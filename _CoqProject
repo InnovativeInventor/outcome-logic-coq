@@ -5,3 +5,4 @@ theories/ol.v
 theories/metatheory.v
 theories/set.v
 theories/util.v
+theories/vec.v
