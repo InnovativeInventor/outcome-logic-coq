@@ -91,20 +91,28 @@ Proof.
 Qed.
 
 Lemma rule_consequence_sound phi phi' psi psi' C :
-  (forall m, m ⊨ phi' ⇒ phi) ->
+  (forall s, s ⊨ phi' ⇒ phi) ->
   ⊨ ⟨ phi ⟩ C ⟨ psi ⟩ ->
-  (forall m, m ⊨ psi ⇒ psi') ->
+  (forall s, s ⊨ psi ⇒ psi') ->
   ⊨ ⟨ phi' ⟩ C ⟨ psi' ⟩.
-Proof. Admitted.
+Proof.
+  intros H1 H H2 ? Hsat. eapply H2.
+  - apply eq_set_refl.
+  - apply H. eapply H1; try eassumption. apply eq_set_refl.
+Qed.
 
 Lemma rule_empty_sound C : ⊨ ⟨ ⊤⊕ ⟩ C ⟨ ⊤⊕ ⟩.
-Proof. Admitted.
+Proof.
+  intros ? Hsat. eapply eq_set_respects_sat; try eassumption.
+  intros ?. split; intros ?; simpgoal'.
+  all: apply Hsat in H; destruct H.
+Qed.
 
 Lemma rule_true_sound phi C  : ⊨ ⟨ phi ⟩ C ⟨ ⊤ ⟩.
-Proof. Admitted.
+Proof. intros ??. constructor. Qed.
 
 Lemma rule_false_sound C phi : ⊨ ⟨ ⊥ ⟩ C ⟨ phi ⟩.
-Proof. Admitted.
+Proof. intros ? Hc. destruct Hc. Qed.
 
 Lemma rule_plus_sound phi psi1 psi2 C1 C2 :
   ⊨ ⟨ phi ⟩ C1 ⟨ psi1 ⟩ ->
