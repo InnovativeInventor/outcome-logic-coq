@@ -131,10 +131,23 @@ Proof.
       apply EvalBr2. eassumption.
 Qed.
 
+Lemma star_unfold C σ : ⟦ C ⋆ ⟧ σ ≡ ⟦ 𝟙 + C ⨟ C ⋆ ⟧ σ.
+  intros σ'; split; intros H.
+  - inversion H; simpgoal.
+    + apply EvalBr1. constructor.
+    + apply EvalBr2. assumption.
+  - inversion H; clear H; simpgoal'. simpgoal.
+Qed.
+
 Lemma rule_induction_sound phi psi C :
   ⊨ ⟨ phi ⟩ 𝟙 + C ⨟ C ⋆ ⟨ psi ⟩ ->
-  ⊨ ⟨ phi ⟩ C ⟨ psi ⟩.
-Proof. Admitted.
+  ⊨ ⟨ phi ⟩ C ⋆ ⟨ psi ⟩.
+Proof.
+  intros H ? H'. eapply eq_set_respects_sat.
+  2: { apply H. apply H'. }
+  eapply cong_bind; intros; eauto with sets.
+  apply eq_set_symm. apply star_unfold.
+Qed.
 
 Create HintDb sound_lemmas.
 
