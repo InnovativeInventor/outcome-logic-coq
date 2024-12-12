@@ -113,4 +113,5 @@ Inductive rules : assertion -> cl -> assertion -> Prop :=
 | RuleInduction phi psi C :
   ⊢ ⟨ phi ⟩ 𝟙 + C ⨟ C ⋆ ⟨ psi ⟩ ->
   ⊢ ⟨ phi ⟩ C ⋆ ⟨ psi ⟩
+(* TODO: add rule for atomic commands *)
 where "⊢ ⟨ phi ⟩ C ⟨ psi ⟩" := (rules phi C psi).
