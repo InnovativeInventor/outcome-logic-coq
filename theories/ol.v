@@ -35,6 +35,7 @@ Definition sat_atom (S : set state) (P : prop) : Prop :=
   end.
 
 Reserved Notation "S ⊨ phi" (at level 80).
+Reserved Notation "S ⊨sem phi" (at level 80).
 
 Fixpoint sat (S : set state) (phi : assertion) : Prop :=
   match phi with
@@ -58,6 +59,21 @@ Definition triple (phi : assertion) (C : cl) (psi : assertion) : Prop :=
   forall S, S ⊨ phi -> (S >>= ⟦ C ⟧) ⊨ psi.
 
 Notation "⊨ ⟨ phi ⟩ C ⟨ psi ⟩" := (triple phi C psi).
+
+Definition semantic_sat (phi : set (set state)) : Prop :=
+  exists x, x ∈ phi.
+
+Notation "m ⊨sem phi" := (semantic_sat m phi).
+
+Definition semantic_triple (phi : set (set state)) (C : cl) (psi : set (set state)) : Prop :=
+  forall m, m ∈ phi -> (m >>= ⟦ C ⟧) ∈ psi.
+
+Notation "⊨sem ⟨ phi ⟩ C ⟨ psi ⟩" := (semantic_triple phi C psi).
+
+Definition semantic_triple_neg (phi : set (set state)) (C : cl) (psi : set (set state)) : Prop :=
+  exists m, m ∈ phi /\ (m >>= ⟦ C ⟧) ∈ (set_not psi).
+
+Notation "⊭sem ⟨ phi ⟩ C ⟨ psi ⟩" := (semantic_triple_neg phi C psi).
 
 Definition underapprox (phi : assertion) (C : cl) (psi : assertion) : Prop :=
   triple phi C (psi ⊕ ⊤).

@@ -21,6 +21,15 @@ Definition union `{X : Type} (S1 : set X) (S2 : set X) : set X :=
 
 Notation "S1 ◇ S2" := (union S1 S2) (at level 70).
 
+Definition set_not `{X : Type} (S : set X) : set X := fun x => ~ S x.
+
+Notation "¬set S" := (not S) (at level 70).
+
+Definition subseteq `{X : Type} (S1 : set X) (S2 : set X) : Prop :=
+  forall x, S1 x -> S2 x.
+
+Notation "S1 ⊆ S2" := (subseteq S1 S2) (at level 70).
+
 Definition ret `{X : Type} (x : X) : set X :=
   fun x' => x = x'.
 

@@ -161,3 +161,41 @@ Theorem rules_sound phi C psi :
 Proof.
   intros. induction H; eauto with sound_lemmas.
 Qed.
+
+Theorem semantic_falsification phi C psi :
+  ((⊭sem ⟨ phi ⟩ C ⟨ psi ⟩))
+      <->
+  (exists phi',
+    (phi' ⊆ phi) /\ (semantic_sat phi') /\ (semantic_triple phi' C (set_not psi ))).
+Proof.
+  split; intros.
+  * unfold semantic_triple_neg in H.
+    repeat destruct H.
+    exists (ret x).
+    split; try split.
+    + unfold ret.
+      unfold subseteq.
+      intros.
+      subst.
+      apply H.
+    + unfold semantic_sat.
+      exists x.
+      unfold ret.
+      unfold member.
+      auto.
+    + unfold semantic_triple.
+      intros.
+      unfold member in *.
+      unfold ret in *.
+      subst.
+      auto.
+  * repeat destruct H.
+    destruct H0.
+    unfold semantic_sat in H0.
+    destruct H0.
+    unfold semantic_triple_neg.
+    unfold semantic_triple in H1.
+    exists x0.
+    specialize (H x0 H0).
+    split; auto.
+Qed.
