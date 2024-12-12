@@ -32,6 +32,11 @@ Notation "s >>= f" := (bind s f) (at level 70).
 Ltac solve_eq_set :=
   repeat (progress (unfold ret, "∅", "∈", "◇", bind, "≡" in *; simpgoal)).
 
+Lemma eq_set_refl `{X : Type} (s : set X) : s ≡ s.
+Proof.
+  intros ?. split; intros ?; solve_eq_set.
+Qed.
+
 Lemma eq_set_trans `{X : Type} (s1 s2 s3 : set X) :
   s1 ≡ s2 ->
   s2 ≡ s3 ->
