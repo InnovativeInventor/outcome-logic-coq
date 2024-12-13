@@ -6,3 +6,4 @@ theories/metatheory.v
 theories/set.v
 theories/util.v
 theories/vec.v
+examples/malloc.v

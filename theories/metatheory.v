@@ -158,8 +158,12 @@ Proof.
   apply eq_set_symm. apply star_unfold.
 Qed.
 
+Lemma rule_assign_sound x e :
+  ⊨ ⟨ Ok ⟩ x <- e ⟨ x == e ⟩.
+Proof. Admitted.
+
 Lemma rule_alloc_sound x :
-  ⊨ ⟨ Ok ⟩ x <- alloc ⟨ Var x --> - ⟩.
+  ⊨ ⟨ Ok ⟩ x <- alloc ⟨ var x --> - ⟩.
 Proof. Admitted.
 
 Lemma rule_write_ok_sound e1 e2 :
@@ -172,7 +176,7 @@ Proof. Admitted.
 
 Create HintDb atom_sound_lemmas.
 
-Hint Resolve rule_alloc_sound rule_write_ok_sound
+Hint Resolve rule_assign_sound rule_alloc_sound rule_write_ok_sound
   rule_write_err_sound : atom_sound_lemmas.
 
 Lemma rules_atom_sound P c Q :

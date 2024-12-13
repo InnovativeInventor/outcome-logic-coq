@@ -28,8 +28,6 @@ Notation "[ e1 ] <- e2" := (Write e1 e2) (at level 35).
 Notation "x <- [ e ]" := (Read x e) (at level 35).
 Notation "x <- 'alloc'" := (Alloc x) (at level 35).
 
-Notation "x <- 'malloc'" := (x <- alloc + x <- null) (at level 35).
-
 (* command language *)
 Inductive cl : Type :=
 | Zero
@@ -49,6 +47,8 @@ Notation "C1 + C2" := (Branch C1 C2).
 Notation "C1 ⨟ C2" := (Seq C1 C2) (at level 45).
 
 (* sugar for imperative programs *)
+
+Notation "x <- 'malloc'" := (x <- alloc + x <- null) (at level 35).
 
 Notation "'skip'" := 𝟙.
 

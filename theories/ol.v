@@ -7,11 +7,13 @@ Inductive prop : Type :=
 | MapsTo (e : expr) (e : expr)
 | Mapped (e : expr)
 | Unmapped (e : expr)
+| Assigned (x : nat) (e : expr)
 .
 
-Notation "e --> v" := (MapsTo e v) (at level 80).
-Notation "e --> -" := (Mapped e) (at level 80).
-Notation "e -/->" := (Unmapped e) (at level 80).
+Notation "e --> v" := (MapsTo e v) (at level 55).
+Notation "e --> -" := (Mapped e) (at level 55).
+Notation "e -/->" := (Unmapped e) (at level 55).
+Notation "x == e" := (Assigned x e) (at level 55).
 
 Inductive assertion : Type :=
 | Top : assertion
@@ -29,24 +31,26 @@ Coercion Atomic : prop >-> assertion.
 Notation "⊤" := Top.
 Notation "⊥" := Bot.
 Notation "⊤⊕" := Diverge.
-Notation "phi ∧ psi" := (And phi psi) (at level 60).
-Notation "phi ∨ psi" := (Or phi psi) (at level 60).
-Notation "phi ⊕ psi" := (Conj phi psi) (at level 60).
-Notation "phi ⇒ psi" := (Impl phi psi) (at level 70).
+Notation "phi ∧ psi" := (And phi psi) (at level 70).
+Notation "phi ∨ psi" := (Or phi psi) (at level 70).
+Notation "phi ⊕ psi" := (Conj phi psi) (at level 80).
+Notation "phi ⇒ psi" := (Impl phi psi) (at level 60).
 
 (* TODO: add more atomic propositions *)
 Definition sat_atom (S : set state) (P : prop) : Prop :=
   match P with
   | Ok => S ≡ (fun σ => exists s h, σ = <{s, h}>)
   | Err => S ≡ (ret err)
-  | MapsTo e1 e2 =>
+  | e1 --> e2 =>
       S ≡ (fun σ => exists s h i v,
                σ = <{s, h}> /\ isnat s e1 i /\
                  eval_expr e2 s = v /\ mapsto h i v)
-  | Mapped e =>
+  | e --> - =>
       S ≡ (fun σ => exists s h i v, σ = <{s, h}> /\ isnat s e i /\ mapsto h i v)
-  | Unmapped e =>
+  | e -/-> =>
       S ≡ (fun σ => exists s h, σ = <{s, h}> /\ eval_expr e s = None)
+  | x == e =>
+      S ≡ (fun σ => exists s h v, σ = <{s, h}> /\ eval_expr e s = v /\ eval_expr (var x) s = v)
   end.
 
 Notation "S ⊨atom P" := (sat_atom S P) (at level 80).
@@ -105,8 +109,10 @@ Notation "⊨pc ⟨ phi ⟩ C ⟨ psi ⟩" := (pc phi C psi).
 Reserved Notation "⊢atom ⟨ P ⟩ c ⟨ Q ⟩".
 
 Inductive rules_atom : prop -> cmd -> prop -> Prop :=
+| RuleAssign x e :
+  ⊢atom ⟨ Ok ⟩ x <- e ⟨ x == e ⟩
 | RuleAlloc x :
-  ⊢atom ⟨ Ok ⟩ x <- alloc ⟨ Var x --> - ⟩
+  ⊢atom ⟨ Ok ⟩ x <- alloc ⟨ var x --> - ⟩
 | RuleWriteOk e1 e2 :
   ⊢atom ⟨ e1 --> - ⟩ [ e1 ] <- e2 ⟨ e1 --> e2 ⟩
 | RuleWriteErr e1 e2 :
