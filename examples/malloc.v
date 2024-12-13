@@ -6,4 +6,13 @@ Definition buggy_program (x : nat) : cl :=
 .
 
 Theorem spec x : ⊢ ⟨ Ok ⟩ buggy_program x ⟨ var x --> 1 ⊕ Err ⟩.
-Proof. Admitted.
+Proof.
+  eapply RuleSeq.
+  - eapply RulePlus.
+    + eapply RuleCmd. eapply RuleAlloc.
+    + eapply RuleCmd. eapply RuleAssign.
+  - eapply RuleSplit; eauto using rules, rules_atom.
+    eapply RuleConsequence. 2: { eapply RuleCmd. eapply RuleWriteErr. }
+    + apply null_implies_unmapped.
+    + intros ????. solve_eq_set.
+Qed.

@@ -60,6 +60,14 @@ Proof.
   - eapply eq_set_respects_sat_atom; eauto.
 Qed.
 
+Lemma null_implies_unmapped x S : S ⊨ x == null ⇒ (var x) -/->.
+Proof.
+  intros S' Heq Hsat. eapply eq_set_trans.
+  - apply Hsat.
+  - intros σ; split; intros; solve_eq_set.
+    repeat eexists. eassumption.
+Qed.
+
 Lemma rule_zero_sound phi : ⊨ ⟨ phi ⟩ 𝟘 ⟨ ⊤⊕ ⟩.
 Proof.
   intros S ? σ. split.
