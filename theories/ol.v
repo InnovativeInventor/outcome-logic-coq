@@ -2,14 +2,21 @@ Require Import semantics.
 Require Import set.
 
 Inductive prop : Type :=
-| Sat
-| Unsat
+| Ok
+| Err
+| MapsTo (e : expr) (e : expr)
+| Mapped (e : expr)
+| Unmapped (e : expr)
 .
+
+Notation "e --> v" := (MapsTo e v) (at level 80).
+Notation "e --> -" := (Mapped e) (at level 80).
+Notation "e -/->" := (Unmapped e) (at level 80).
 
 Inductive assertion : Type :=
 | Top : assertion
 | Bot : assertion
-| None : assertion
+| Diverge : assertion
 | And : assertion -> assertion -> assertion
 | Or : assertion -> assertion -> assertion
 | Conj : assertion -> assertion -> assertion
@@ -21,7 +28,7 @@ Coercion Atomic : prop >-> assertion.
 
 Notation "⊤" := Top.
 Notation "⊥" := Bot.
-Notation "⊤⊕" := None.
+Notation "⊤⊕" := Diverge.
 Notation "phi ∧ psi" := (And phi psi) (at level 60).
 Notation "phi ∨ psi" := (Or phi psi) (at level 60).
 Notation "phi ⊕ psi" := (Conj phi psi) (at level 60).
@@ -30,9 +37,19 @@ Notation "phi ⇒ psi" := (Impl phi psi) (at level 70).
 (* TODO: add more atomic propositions *)
 Definition sat_atom (S : set state) (P : prop) : Prop :=
   match P with
-  | Sat => True
-  | Unsat => False
+  | Ok => S ≡ (fun σ => exists s h, σ = <{s, h}>)
+  | Err => S ≡ (ret err)
+  | MapsTo e1 e2 =>
+      S ≡ (fun σ => exists s h i v,
+               σ = <{s, h}> /\ isnat s e1 i /\
+                 eval_expr e2 s = v /\ mapsto h i v)
+  | Mapped e =>
+      S ≡ (fun σ => exists s h i v, σ = <{s, h}> /\ isnat s e i /\ mapsto h i v)
+  | Unmapped e =>
+      S ≡ (fun σ => exists s h, σ = <{s, h}> /\ eval_expr e s = None)
   end.
+
+Notation "S ⊨atom P" := (sat_atom S P) (at level 80).
 
 Reserved Notation "S ⊨ phi" (at level 80).
 Reserved Notation "S ⊨sem phi" (at level 80).
@@ -46,7 +63,7 @@ Fixpoint sat (S : set state) (phi : assertion) : Prop :=
   | phi ∨ psi => S ⊨ phi \/ S ⊨ psi
   | phi ⊕ psi => exists S1 S2, S ≡ S1 ◇ S2 /\ S1 ⊨ phi /\ S2 ⊨ psi
   | phi ⇒ psi => forall S', S ≡ S' -> S' ⊨ phi -> S' ⊨ psi
-  | Atomic P => sat_atom S P
+  | Atomic P => S ⊨atom P
   end
 where "S ⊨ phi" := (sat S phi).
 
@@ -85,6 +102,17 @@ Definition pc (phi : assertion) (C : cl) (psi : assertion) : Prop :=
 
 Notation "⊨pc ⟨ phi ⟩ C ⟨ psi ⟩" := (pc phi C psi).
 
+Reserved Notation "⊢atom ⟨ P ⟩ c ⟨ Q ⟩".
+
+Inductive rules_atom : prop -> cmd -> prop -> Prop :=
+| RuleAlloc x :
+  ⊢atom ⟨ Ok ⟩ x <- alloc ⟨ Var x --> - ⟩
+| RuleWriteOk e1 e2 :
+  ⊢atom ⟨ e1 --> - ⟩ [ e1 ] <- e2 ⟨ e1 --> e2 ⟩
+| RuleWriteErr e1 e2 :
+  ⊢atom ⟨ e1 -/-> ⟩ [ e1 ] <- e2 ⟨ Err ⟩
+where "⊢atom ⟨ P ⟩ c ⟨ Q ⟩" := (rules_atom P c Q).
+
 Reserved Notation "⊢ ⟨ phi ⟩ C ⟨ psi ⟩".
 
 Inductive rules : assertion -> cl -> assertion -> Prop :=
@@ -113,5 +141,7 @@ Inductive rules : assertion -> cl -> assertion -> Prop :=
 | RuleInduction phi psi C :
   ⊢ ⟨ phi ⟩ 𝟙 + C ⨟ C ⋆ ⟨ psi ⟩ ->
   ⊢ ⟨ phi ⟩ C ⋆ ⟨ psi ⟩
-(* TODO: add rule for atomic commands *)
+| RuleCmd P Q c :
+  ⊢atom ⟨ P ⟩ c ⟨ Q ⟩ ->
+  ⊢ ⟨ P ⟩ c ⟨ Q ⟩
 where "⊢ ⟨ phi ⟩ C ⟨ psi ⟩" := (rules phi C psi).

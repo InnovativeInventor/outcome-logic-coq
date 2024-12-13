@@ -35,6 +35,14 @@ Ltac simp' :=
 Ltac simpgoal' :=
   repeat (unfold bind, outputs, triple in *; simpl in *; simp').
 
+Lemma eq_set_respects_sat_atom S S' P :
+  S ≡ S' ->
+  S ⊨atom P ->
+  S' ⊨atom P.
+Proof.
+  revert S S'. induction P; intros; solve_eq_set.
+Qed.
+
 Lemma eq_set_respects_sat S S' phi :
   S ≡ S' ->
   S ⊨ phi ->
@@ -49,6 +57,7 @@ Proof.
       * solve_eq_set. apply Heq. apply H. left. assumption.
       * solve_eq_set. apply Heq. apply H. right. assumption.
   - apply Hsat; eauto with sets.
+  - eapply eq_set_respects_sat_atom; eauto.
 Qed.
 
 Lemma rule_zero_sound phi : ⊨ ⟨ phi ⟩ 𝟘 ⟨ ⊤⊕ ⟩.
@@ -149,18 +158,38 @@ Proof.
   apply eq_set_symm. apply star_unfold.
 Qed.
 
+Lemma rule_alloc_sound x :
+  ⊨ ⟨ Ok ⟩ x <- alloc ⟨ Var x --> - ⟩.
+Proof. Admitted.
+
+Lemma rule_write_ok_sound e1 e2 :
+  ⊨ ⟨ e1 --> - ⟩ [ e1 ] <- e2 ⟨ e1 --> e2 ⟩.
+Proof. Admitted.
+
+Lemma rule_write_err_sound e1 e2 :
+  ⊨ ⟨ e1 -/-> ⟩ [ e1 ] <- e2 ⟨ Err ⟩.
+Proof. Admitted.
+
+Create HintDb atom_sound_lemmas.
+
+Hint Resolve rule_alloc_sound rule_write_ok_sound
+  rule_write_err_sound : atom_sound_lemmas.
+
+Lemma rules_atom_sound P c Q :
+  ⊢atom ⟨ P ⟩ c ⟨ Q ⟩ ->
+  ⊨ ⟨ P ⟩ c ⟨ Q ⟩.
+Proof. intros. induction H; eauto with atom_sound_lemmas. Qed.
+
 Create HintDb sound_lemmas.
 
 Hint Resolve rule_zero_sound rule_one_sound rule_seq_sound rule_split_sound
   rule_consequence_sound rule_empty_sound rule_true_sound rule_false_sound
-  rule_plus_sound rule_induction_sound : sound_lemmas.
+  rule_plus_sound rule_induction_sound rules_atom_sound : sound_lemmas.
 
 Theorem rules_sound phi C psi :
   ⊢ ⟨ phi ⟩ C ⟨ psi ⟩ ->
   ⊨ ⟨ phi ⟩ C ⟨ psi ⟩.
-Proof.
-  intros. induction H; eauto with sound_lemmas.
-Qed.
+Proof. intros. induction H; eauto with sound_lemmas. Qed.
 
 Theorem semantic_falsification phi C psi :
   ((⊭sem ⟨ phi ⟩ C ⟨ psi ⟩))
