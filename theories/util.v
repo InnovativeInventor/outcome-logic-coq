@@ -1,3 +1,7 @@
+From Coq Require Export Arith.PeanoNat.
+Require Export Lia.
+From Coq Require Export Logic.FunctionalExtensionality.
+
 Ltac simp :=
   match goal with
   | [ p : (_ * _)%type |- _ ] => destruct p

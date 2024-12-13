@@ -29,6 +29,18 @@ Ltac simp' :=
       inversion H; clear H
   | [ H : (Atom _, _) ⇓ _ |- _ ] =>
       inversion H; clear H
+  | [ H : eval_cmd (Assume _) _ _ |- _ ] =>
+      inversion H; clear H
+  | [ H : eval_cmd (¬ _) _ _ |- _ ] =>
+      inversion H; clear H
+  | [ H : eval_cmd (_ <- alloc) _ _ |- _ ] =>
+      inversion H; clear H
+  | [ H : eval_cmd (_ <- _) _ _ |- _ ] =>
+      inversion H; clear H
+  | [ H : eval_cmd ([ _ ] <- _) _ _ |- _ ] =>
+      inversion H; clear H
+  | [ H : eval_cmd (_ <- [ _ ]) _ _ |- _ ] =>
+      inversion H; clear H
   | _ => simp
   end.
 
@@ -168,11 +180,33 @@ Qed.
 
 Lemma rule_assign_sound x e :
   ⊨ ⟨ Ok ⟩ x <- e ⟨ x == e ⟩.
-Proof. Admitted.
+Proof.
+  intros ? Hsat. intros σ; split; intros [s [h ?]]; simpgoal'.
+  - repeat eexists. destruct e as [x'| | ].
+    + simpl. rewrite lookup_insert. unfold insert.
+      destruct (Nat.eq_dec x x'); simpgoal.
+    + rewrite lookup_insert. reflexivity.
+    + rewrite lookup_insert. reflexivity.
+  - repeat eexists. apply Hsat. repeat eexists.
+    eapply EvalCmd. eapply EvalAssign.
+    apply functional_extensionality; intros x'.
+    unfold insert. destruct (Nat.eq_dec x x'); simpgoal.
+    all: eauto.
+Qed.
 
 Lemma rule_alloc_sound x :
   ⊨ ⟨ Ok ⟩ x <- alloc ⟨ var x --> - ⟩.
-Proof. Admitted.
+Proof.
+  intros ? Hsat. intros σ; split; intros [s [h ?]]; simpgoal'.
+  - repeat eexists.
+    + unfold isnat. simpl. rewrite lookup_insert. reflexivity.
+    + admit.
+  - repeat eexists.
+    + admit.
+    + eapply EvalCmd. eapply EvalAlloc.
+      * admit.
+      * admit.
+Admitted.
 
 Lemma rule_write_ok_sound e1 e2 :
   ⊨ ⟨ e1 --> - ⟩ [ e1 ] <- e2 ⟨ e1 --> e2 ⟩.
@@ -180,7 +214,19 @@ Proof. Admitted.
 
 Lemma rule_write_err_sound e1 e2 :
   ⊨ ⟨ e1 -/-> ⟩ [ e1 ] <- e2 ⟨ Err ⟩.
-Proof. Admitted.
+Proof.
+  intros ? Hsat. unfold sat, sat_atom in *.
+  eapply eq_set_trans.
+  - eapply cong_bind; try eassumption. intros ?. eapply eq_set_refl.
+  - intros σ. split; intros.
+    + inversion H; clear H; simpgoal'; solve_eq_set.
+      inversion H. subst. unfold isnat in *.
+      rewrite H0 in *. contradiction.
+    + exists empty_state. repeat eexists.
+      * admit.
+      * rewrite <- H. eapply EvalCmd.
+        eapply EvalWriteNull. admit.
+Admitted.
 
 Create HintDb atom_sound_lemmas.
 

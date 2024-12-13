@@ -1,77 +1,5 @@
-From Coq Require Import Arith.PeanoNat.
-
+Require Export state.
 Require Export syntax.
-Require Import vec.
-
-Definition value := option nat.
-
-Definition stack := nat -> value.
-Definition heap := { n & vec n value }.
-
-Definition newptr (h : heap) : heap * nat :=
-  match h with
-  | existT _ n l => (existT _ (S n) (append l None) , n)
-  end.
-
-Definition read (h : heap) (i : nat) : option value :=
-  match h with
-  | existT _ _ l => lookup l i
-  end.
-
-Definition hasptr (h : heap) (i : nat) : Prop :=
-  match h with
-  | existT _ n _ => i < n
-  end.
-
-Definition write (h : heap) (i : nat) (v : value) : heap :=
-  match h with
-  | existT _ n l =>
-      existT _ n (update l i v)
-  end.
-
-Definition state := ((stack * heap) + unit)%type.
-
-Definition good_state (s : stack) (h : heap) : state := inl (s , h).
-
-Notation "<{ s , h }>" := (good_state s h).
-
-Definition mem_err : state := inr tt.
-
-Notation "'err'" := mem_err.
-
-Definition insert (x : nat) (v : value) (s : stack) : stack :=
-  fun y => if Nat.eq_dec x y then v else s y.
-
-Definition eval_expr (e : expr) (s : stack) : value :=
-  match e with
-  | Var x => s x
-  | Lit n => Some n
-  | Null => None
-  end.
-
-Definition isnat (s : stack) (e : expr) (n : nat) : Prop :=
-  match eval_expr e s with
-  | None => False
-  | Some n' => n = n'
-  end.
-
-Definition mapsto (h : heap) (i : nat) (v : value) : Prop :=
-  match read h i with
-  | None => False
-  | Some v' => v = v'
-  end.
-
-Definition is_true (v : value) : Prop :=
-  match v with
-  | Some n => n > 0
-  | None => False
-  end.
-
-Definition is_false (v : value) : Prop :=
-  match v with
-  | Some n => n = 0
-  | None => True
-  end.
 
 Inductive eval_cmd : cmd -> state -> state -> Prop :=
 | EvalAssume e s h v :
@@ -81,7 +9,7 @@ Inductive eval_cmd : cmd -> state -> state -> Prop :=
 | EvalNot e s h v :
   eval_expr e s = v ->
   is_false v ->
-  eval_cmd e <{s, h}> <{s, h}>
+  eval_cmd (¬ e) <{s, h}> <{s, h}>
 | EvalAssign x e s s' h :
   s' = insert x (eval_expr e s) s ->
   eval_cmd (x <- e) <{s, h}> <{s', h}>
