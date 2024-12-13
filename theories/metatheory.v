@@ -2,6 +2,7 @@ Require Import semantics.
 Require Import set.
 Require Import ol.
 Require Import util.
+Require Import vec.
 
 Ltac simp' :=
   match goal with
@@ -197,15 +198,16 @@ Qed.
 Lemma rule_alloc_sound x :
   ⊨ ⟨ Ok ⟩ x <- alloc ⟨ var x --> - ⟩.
 Proof.
-  intros ? Hsat. intros σ; split; intros [s [h ?]]; simpgoal'.
-  - repeat eexists.
+  intros ? Hsat. intros σ; split; intros; simpgoal'.
+  - destruct h as [n l'] eqn:Heq.
+    assert (i = n). { eapply newptr_le. eauto. }
+    destruct h' as [n' l] eqn:Heq'.
+    destruct (lookup_le l i) as [v Hlookup].
+    { assert (n' = Datatypes.S n). { unfold newptr in *. simpgoal. reflexivity. } lia. }
+    repeat eexists.
     + unfold isnat. simpl. rewrite lookup_insert. reflexivity.
-    + admit.
-  - repeat eexists.
-    + admit.
-    + eapply EvalCmd. eapply EvalAlloc.
-      * admit.
-      * admit.
+    + unfold mapsto, read. rewrite Hlookup. reflexivity.
+  - admit.
 Admitted.
 
 Lemma rule_write_ok_sound e1 e2 :

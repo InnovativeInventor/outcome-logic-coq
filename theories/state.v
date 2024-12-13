@@ -46,19 +46,6 @@ Notation "'err'" := mem_err.
 Definition insert (x : nat) (v : value) (s : stack) : stack :=
   fun y => if Nat.eq_dec x y then v else s y.
 
-Definition eval_expr (e : expr) (s : stack) : value :=
-  match e with
-  | Var x => s x
-  | Lit n => Some n
-  | Null => None
-  end.
-
-Definition isnat (s : stack) (e : expr) (n : nat) : Prop :=
-  match eval_expr e s with
-  | None => False
-  | Some n' => n = n'
-  end.
-
 Definition mapsto (h : heap) (i : nat) (v : value) : Prop :=
   match read h i with
   | None => False
@@ -93,4 +80,9 @@ Proof.
   intros. unfold insert. destruct (Nat.eq_dec x x); congruence.
 Qed.
 
-                       
+Lemma newptr_le `{n : nat} (l : vec n value) h' i :
+  newptr (existT _ n l) = (h' , i) ->
+  i = n.
+Proof.
+  intros. unfold newptr in *. simpgoal.
+Qed.

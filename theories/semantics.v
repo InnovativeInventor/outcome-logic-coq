@@ -1,6 +1,19 @@
 Require Export state.
 Require Export syntax.
 
+Definition eval_expr (e : expr) (s : stack) : value :=
+  match e with
+  | Var x => s x
+  | Lit n => Some n
+  | Null => None
+  end.
+
+Definition isnat (s : stack) (e : expr) (n : nat) : Prop :=
+  match eval_expr e s with
+  | None => False
+  | Some n' => n = n'
+  end.
+
 Inductive eval_cmd : cmd -> state -> state -> Prop :=
 | EvalAssume e s h v :
   eval_expr e s = v ->
