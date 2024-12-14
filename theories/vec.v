@@ -10,13 +10,13 @@ Fixpoint vec (n : nat) (A : Type) : Type :=
 Definition append `{A : Type} `{n : nat} (l : vec n A) (a : A) : vec (S n) A :=
   (a , l).
 
-Fixpoint lookup `{A : Type} `{n : nat} (l : vec n A) (i : nat) : option A :=
+Fixpoint find `{A : Type} `{n : nat} (l : vec n A) (i : nat) : option A :=
   match n return (vec n A -> option A) with
   | O => fun _ => None
   | S n => fun '(a , l) =>
              match i with
              | O => Some a
-             | S i => lookup l i
+             | S i => find l i
              end
   end l.
 
@@ -29,10 +29,20 @@ Fixpoint update `{A : Type} `{n : nat} (l : vec n A) (i : nat) (a : A) : vec n A
              | S i => (a' , update l' i a)
              end
   end l.
-    
-Theorem lookup_le `{A : Type} `{n : nat} (l : vec n A) (i : nat) :
+
+Theorem find_update `{A : Type} `{n : nat} (l : vec n A) (i : nat) (a : A) :
   i < n ->
-  exists a, lookup l i = Some a.
+  find (update l i a) i = Some a.
+Proof.
+  revert i l a. induction n.
+  - intros ??? Hc. inversion Hc.
+  - intros i. induction i; intros ???; simpgoal.
+    assert (i < n) by lia. simpgoal.
+Qed.
+
+Theorem find_le `{A : Type} `{n : nat} (l : vec n A) (i : nat) :
+  i < n ->
+  exists a, find l i = Some a.
 Proof.
   revert i l. induction n.
   - intros ?? Hc. inversion Hc.
@@ -42,7 +52,7 @@ Qed.
 
 Theorem update_le `{A : Type} `{n : nat} (l : vec n A) (i : nat) (a : A) :
   i < n ->
-  lookup (update l i a) i = Some a.
+  find (update l i a) i = Some a.
 Proof.
   revert i l a. induction n.
   - intros ??? Hc. inversion Hc.

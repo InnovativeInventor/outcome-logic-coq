@@ -1,5 +1,6 @@
 Require Import semantics.
 Require Import set.
+Require Import vec.
 
 Inductive okprop : Type :=
 | OkTrue
@@ -50,7 +51,7 @@ Definition sat_state (σ : state) (P : okprop) : Prop :=
       exists s h i v,
         σ = <{s, h}> /\ isnat s e1 i /\ eval_expr e2 s = v /\ mapsto h i v
   | e --> - =>
-      exists s h i v, σ = <{s, h}> /\ isnat s e i /\ mapsto h i v
+      exists s h i n (l : vec n value), σ = <{s, h}> /\ h = existT _ n l /\ isnat s e i /\ i < n
   | e -/-> => exists s h, σ = <{s, h}> /\ eval_expr e s = None
   | x == e =>
       exists s h v, σ = <{s, h}> /\ eval_expr e s = v /\ eval_expr (var x) s = v

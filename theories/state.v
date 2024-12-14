@@ -17,7 +17,7 @@ Definition newptr (h : heap) : heap * nat :=
 
 Definition read (h : heap) (i : nat) : option value :=
   match h with
-  | existT _ _ l => lookup l i
+  | existT _ _ l => find l i
   end.
 
 Definition hasptr (h : heap) (i : nat) : Prop :=
@@ -78,11 +78,4 @@ Qed.
 Lemma lookup_insert x v s : (insert x v s) x = v.
 Proof. 
   intros. unfold insert. destruct (Nat.eq_dec x x); congruence.
-Qed.
-
-Lemma newptr_le `{n : nat} (l : vec n value) h' i :
-  newptr (existT _ n l) = (h' , i) ->
-  i = n.
-Proof.
-  intros. unfold newptr in *. simpgoal.
 Qed.

@@ -212,10 +212,10 @@ Proof.
   destruct h as [n l].
   exists <{insert x (Some n) s , existT _ (Datatypes.S n) (append l None) }>.
   split.
-  - destruct (lookup_le (append l None) n); try lia.
+  - destruct (find_le (append l None) n); try lia.
     repeat eexists.
     + unfold isnat. simpl. rewrite lookup_insert. reflexivity.
-    + unfold mapsto, read. rewrite H. reflexivity.
+    + lia.
   - split; simpgoal'.
     + apply Hequ in H. simpgoal'.
     + repeat eexists.
@@ -225,11 +225,35 @@ Qed.
 
 Lemma rule_write_ok_sound e1 e2 :
   ⊨ ⟨ e1 --> - ⟩ [ e1 ] <- e2 ⟨ e1 --> e2 ⟩.
-Proof. Admitted.
+Proof.
+  intros ? [σ [[s [h [i [n [l H]]]]] Hequ]].
+  remember (eval_expr e2 s) as v.
+  destruct H as [? [Heq [H1 H2]]].
+  exists <{s , existT _ n (update l i v)}>. split.
+  - repeat eexists; try eassumption.
+    unfold mapsto, read. rewrite find_update; eauto.
+  - intros σ'; split; intros Hin.
+    + destruct Hin as [σ'' [Hin1 Hin2]]. apply Hequ in Hin1.
+      rewrite <- Hin1 in *. simpgoal'; unfold isnat in *;
+        destruct (eval_expr e1 s); try contradiction; simpgoal.
+    + rewrite <- Hin. repeat eexists; simpgoal.
+      * eapply Hequ. reflexivity.
+      * eapply EvalCmd. eapply EvalWrite; simpgoal.
+Qed.
 
 Lemma rule_write_err_sound e1 e2 :
   ⊨ ⟨ e1 -/-> ⟩ [ e1 ] <- e2 ⟨ Err ⟩.
-Proof. Admitted.
+Proof.
+  intros ? [σ [[s [h [Heq Heq']]] Hequ]].
+  split; intros.
+  - simpgoal'; eauto. apply Hequ in H. simpgoal'.
+    unfold isnat in *. rewrite Heq' in *.
+    contradiction.
+  - repeat eexists.
+    + apply Hequ. reflexivity.
+    + simpgoal'. eapply EvalCmd.
+      eapply EvalWriteNull. assumption.
+Qed.
 
 Create HintDb atom_sound_lemmas.
 
