@@ -92,6 +92,14 @@ Definition triple (phi : assertion) (C : cl) (psi : assertion) : Prop :=
 
 Notation "⊨ ⟨ phi ⟩ C ⟨ psi ⟩" := (triple phi C psi).
 
+Definition triple_neg (phi : assertion) (C : cl) (psi : assertion) : Prop :=
+  exists S, S ⊨ phi /\ ~ ((S >>= ⟦ C ⟧) ⊨ psi).
+
+Notation "⊭ ⟨ phi ⟩ C ⟨ psi ⟩" := (triple_neg phi C psi).
+
+Definition semantic_interpretation (phi : assertion) : set (set state) :=
+  fun x => sat x phi.
+
 Definition semantic_sat (phi : set (set state)) : Prop :=
   exists x, x ∈ phi.
 

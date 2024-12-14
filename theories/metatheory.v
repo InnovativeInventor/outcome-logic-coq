@@ -289,3 +289,49 @@ Proof.
     specialize (H x0 H0).
     split; auto.
 Qed.
+
+Lemma syntactic_to_semantic_triples phi C psi phi_sem psi_sem :
+  (phi_sem = semantic_interpretation phi /\
+      psi_sem = semantic_interpretation psi) ->
+  ((⊨sem ⟨ phi_sem ⟩ C ⟨ psi_sem ⟩) <-> (⊨ ⟨ phi ⟩ C ⟨ psi ⟩)).
+Proof.
+  split.
+  * destruct H. intros.
+    unfold semantic_triple in *.
+    unfold triple in *.
+    intros.
+    specialize (H1 S).
+    assert (S ∈ phi_sem).
+    {
+      unfold member.
+      rewrite H.
+      unfold semantic_interpretation.
+      apply H2.
+    }
+    specialize (H1 H3).
+    unfold member in H1.
+    rewrite H0 in H1.
+    unfold semantic_interpretation in H1.
+    apply H1.
+  * intros.
+    destruct H.
+    unfold semantic_triple.
+    intros.
+    subst.
+    unfold triple in H0.
+    specialize (H0 m H2).
+    apply H0.
+Qed.
+
+
+Theorem principle_of_denial phi phi' C psi :
+  ((forall m, (m ⊨ phi') -> (m ⊨ phi)) /\
+    exists m, m ⊨ phi' /\
+    ⊨ ⟨ phi' ⟩ C ⟨ psi ⇒ ⊥ ⟩ ) ->
+  ⊭  ⟨ phi ⟩ C ⟨ psi ⟩.
+Proof.
+  intros.
+  destruct H.
+  repeat destruct H0.
+  epose proof (H _ H0).
+Admitted.
