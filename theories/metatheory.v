@@ -42,18 +42,26 @@ Ltac simp' :=
       inversion H; clear H
   | [ H : eval_cmd (_ <- [ _ ]) _ _ |- _ ] =>
       inversion H; clear H
+  | [ H : <{ _ , _ }> = <{ _ , _ }> |- _ ] =>
+      inversion H; clear H
   | _ => simp
   end.
 
 Ltac simpgoal' :=
-  repeat (unfold bind, outputs, triple in *; simpl in *; simp').
+  repeat (unfold bind, outputs, triple, ret in *; simpl in *; simp').
 
 Lemma eq_set_respects_sat_atom S S' P :
   S ≡ S' ->
   S ⊨atom P ->
   S' ⊨atom P.
 Proof.
-  revert S S'. induction P; intros; solve_eq_set.
+  revert S S'. induction P; simpl in *; intros; simpgoal.
+  - repeat eexists; try eassumption.
+    + intros Hin. apply H1. apply H. apply Hin.
+    + intros Hin. apply H. apply H1. apply Hin.
+  - repeat eexists.
+    + intros Hin. apply H0. apply H. apply Hin.
+    + intros Hin. apply H. apply H0. apply Hin.
 Qed.
 
 Lemma eq_set_respects_sat S S' phi :
@@ -75,10 +83,12 @@ Qed.
 
 Lemma null_implies_unmapped x S : S ⊨ x == null ⇒ (var x) -/->.
 Proof.
-  intros S' Heq Hsat. eapply eq_set_trans.
-  - apply Hsat.
-  - intros σ; split; intros; solve_eq_set.
-    repeat eexists. eassumption.
+  intros S' Heq [σ [Hin Hsat]]. unfold sat, sat_atom, sat_state in *.
+  exists σ. split.
+  - simpgoal'. repeat eexists. eauto.
+  - simpgoal'. repeat eexists.
+    + intros Hin. apply Hsat. apply Hin.
+    + intros Hin. apply Hsat. apply Hin.
 Qed.
 
 Lemma rule_zero_sound phi : ⊨ ⟨ phi ⟩ 𝟘 ⟨ ⊤⊕ ⟩.
@@ -180,35 +190,38 @@ Proof.
 Qed.
 
 Lemma rule_assign_sound x e :
-  ⊨ ⟨ Ok ⟩ x <- e ⟨ x == e ⟩.
+  ⊨ ⟨ ok ⟩ x <- e ⟨ x == e ⟩.
 Proof.
-  intros ? Hsat. intros σ; split; intros [s [h ?]]; simpgoal'.
-  - repeat eexists. destruct e as [x'| | ].
-    + simpl. rewrite lookup_insert. unfold insert.
-      destruct (Nat.eq_dec x x'); simpgoal.
-    + rewrite lookup_insert. reflexivity.
-    + rewrite lookup_insert. reflexivity.
-  - repeat eexists. apply Hsat. repeat eexists.
-    eapply EvalCmd. eapply EvalAssign.
-    apply functional_extensionality; intros x'.
-    unfold insert. destruct (Nat.eq_dec x x'); simpgoal.
-    all: eauto.
+  intros ? [σ [[s [h Heq]] Hequ]].
+  exists <{insert x (eval_expr e s) s, h}>. split; simpgoal.
+  - repeat eexists. destruct e as [x' | |].
+      * simpl. rewrite lookup_insert. unfold insert.
+        destruct (Nat.eq_dec x x'). all: eauto.
+      * rewrite lookup_insert. reflexivity.
+      * rewrite lookup_insert. reflexivity.
+  - repeat eexists; intros; simpgoal'.
+    + apply Hequ in H. simpgoal'.
+    + apply Hequ. reflexivity.
+    + eapply EvalCmd. eapply EvalAssign. eauto.
 Qed.
 
 Lemma rule_alloc_sound x :
-  ⊨ ⟨ Ok ⟩ x <- alloc ⟨ var x --> - ⟩.
+  ⊨ ⟨ ok ⟩ x <- alloc ⟨ var x --> - ⟩.
 Proof.
-  intros ? Hsat. intros σ; split; intros; simpgoal'.
-  - destruct h as [n l'] eqn:Heq.
-    assert (i = n). { eapply newptr_le. eauto. }
-    destruct h' as [n' l] eqn:Heq'.
-    destruct (lookup_le l i) as [v Hlookup].
-    { assert (n' = Datatypes.S n). { unfold newptr in *. simpgoal. reflexivity. } lia. }
+  intros ? [σ [[s [h Heq]] Hequ]].
+  destruct h as [n l].
+  exists <{insert x (Some n) s , existT _ (Datatypes.S n) (append l None) }>.
+  split.
+  - destruct (lookup_le (append l None) n); try lia.
     repeat eexists.
     + unfold isnat. simpl. rewrite lookup_insert. reflexivity.
-    + unfold mapsto, read. rewrite Hlookup. reflexivity.
-  - admit.
-Admitted.
+    + unfold mapsto, read. rewrite H. reflexivity.
+  - split; simpgoal'.
+    + apply Hequ in H. simpgoal'.
+    + repeat eexists.
+      * apply Hequ. reflexivity.
+      * eapply EvalCmd. eapply EvalAlloc; reflexivity.
+Qed.
 
 Lemma rule_write_ok_sound e1 e2 :
   ⊨ ⟨ e1 --> - ⟩ [ e1 ] <- e2 ⟨ e1 --> e2 ⟩.
@@ -216,19 +229,7 @@ Proof. Admitted.
 
 Lemma rule_write_err_sound e1 e2 :
   ⊨ ⟨ e1 -/-> ⟩ [ e1 ] <- e2 ⟨ Err ⟩.
-Proof.
-  intros ? Hsat. unfold sat, sat_atom in *.
-  eapply eq_set_trans.
-  - eapply cong_bind; try eassumption. intros ?. eapply eq_set_refl.
-  - intros σ. split; intros.
-    + inversion H; clear H; simpgoal'; solve_eq_set.
-      inversion H. subst. unfold isnat in *.
-      rewrite H0 in *. contradiction.
-    + exists empty_state. repeat eexists.
-      * admit.
-      * rewrite <- H. eapply EvalCmd.
-        eapply EvalWriteNull. admit.
-Admitted.
+Proof. Admitted.
 
 Create HintDb atom_sound_lemmas.
 

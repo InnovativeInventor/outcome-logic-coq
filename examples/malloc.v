@@ -5,7 +5,7 @@ Definition buggy_program (x : nat) : cl :=
   [ var x ] <- 1
 .
 
-Theorem spec x : ⊢ ⟨ Ok ⟩ buggy_program x ⟨ var x --> 1 ⊕ Err ⟩.
+Theorem spec x : ⊢ ⟨ ok ⟩ buggy_program x ⟨ var x --> 1 ⊕ Err ⟩.
 Proof.
   eapply RuleSeq.
   - eapply RulePlus.

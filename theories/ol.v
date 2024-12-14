@@ -1,19 +1,26 @@
 Require Import semantics.
 Require Import set.
 
-Inductive prop : Type :=
-| Ok
-| Err
+Inductive okprop : Type :=
+| OkTrue
 | MapsTo (e : expr) (e : expr)
 | Mapped (e : expr)
 | Unmapped (e : expr)
 | Assigned (x : nat) (e : expr)
 .
 
+Notation "'ok'" := OkTrue (at level 55).
 Notation "e --> v" := (MapsTo e v) (at level 55).
 Notation "e --> -" := (Mapped e) (at level 55).
 Notation "e -/->" := (Unmapped e) (at level 55).
 Notation "x == e" := (Assigned x e) (at level 55).
+
+Inductive prop : Type :=
+| Ok : okprop -> prop
+| Err : prop
+.
+
+Coercion Ok : okprop >-> prop.
 
 Inductive assertion : Type :=
 | Top : assertion
@@ -36,21 +43,25 @@ Notation "phi ∨ psi" := (Or phi psi) (at level 70).
 Notation "phi ⊕ psi" := (Conj phi psi) (at level 80).
 Notation "phi ⇒ psi" := (Impl phi psi) (at level 60).
 
-(* TODO: add more atomic propositions *)
+Definition sat_state (σ : state) (P : okprop) : Prop :=
+  match P with
+  | OkTrue => exists s h, σ = <{s , h}>
+  | e1 --> e2 =>
+      exists s h i v,
+        σ = <{s, h}> /\ isnat s e1 i /\ eval_expr e2 s = v /\ mapsto h i v
+  | e --> - =>
+      exists s h i v, σ = <{s, h}> /\ isnat s e i /\ mapsto h i v
+  | e -/-> => exists s h, σ = <{s, h}> /\ eval_expr e s = None
+  | x == e =>
+      exists s h v, σ = <{s, h}> /\ eval_expr e s = v /\ eval_expr (var x) s = v
+  end.
+
+Notation "σ ⊨state P" := (sat_state σ P) (at level 80).
+
 Definition sat_atom (S : set state) (P : prop) : Prop :=
   match P with
-  | Ok => S ≡ (fun σ => exists s h, σ = <{s, h}>)
-  | Err => S ≡ (ret err)
-  | e1 --> e2 =>
-      S ≡ (fun σ => exists s h i v,
-               σ = <{s, h}> /\ isnat s e1 i /\
-                 eval_expr e2 s = v /\ mapsto h i v)
-  | e --> - =>
-      S ≡ (fun σ => exists s h i v, σ = <{s, h}> /\ isnat s e i /\ mapsto h i v)
-  | e -/-> =>
-      S ≡ (fun σ => exists s h, σ = <{s, h}> /\ eval_expr e s = None)
-  | x == e =>
-      S ≡ (fun σ => exists s h v, σ = <{s, h}> /\ eval_expr e s = v /\ eval_expr (var x) s = v)
+  | Err => S ≡ ret err
+  | Ok P => exists σ, σ ⊨state P /\ S ≡ ret σ
   end.
 
 Notation "S ⊨atom P" := (sat_atom S P) (at level 80).
@@ -110,9 +121,9 @@ Reserved Notation "⊢atom ⟨ P ⟩ c ⟨ Q ⟩".
 
 Inductive rules_atom : prop -> cmd -> prop -> Prop :=
 | RuleAssign x e :
-  ⊢atom ⟨ Ok ⟩ x <- e ⟨ x == e ⟩
+  ⊢atom ⟨ ok ⟩ x <- e ⟨ x == e ⟩
 | RuleAlloc x :
-  ⊢atom ⟨ Ok ⟩ x <- alloc ⟨ var x --> - ⟩
+  ⊢atom ⟨ ok ⟩ x <- alloc ⟨ var x --> - ⟩
 | RuleWriteOk e1 e2 :
   ⊢atom ⟨ e1 --> - ⟩ [ e1 ] <- e2 ⟨ e1 --> e2 ⟩
 | RuleWriteErr e1 e2 :
