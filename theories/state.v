@@ -15,7 +15,7 @@ Definition newptr (h : heap) : heap * nat :=
   | existT _ n l => (existT _ (S n) (append l None) , n)
   end.
 
-Definition read (h : heap) (i : nat) : option value :=
+Definition load (h : heap) (i : nat) : option value :=
   match h with
   | existT _ _ l => find l i
   end.
@@ -25,7 +25,7 @@ Definition hasptr (h : heap) (i : nat) : Prop :=
   | existT _ n _ => i < n
   end.
 
-Definition write (h : heap) (i : nat) (v : value) : heap :=
+Definition store (h : heap) (i : nat) (v : value) : heap :=
   match h with
   | existT _ n l =>
       existT _ n (update l i v)
@@ -47,7 +47,7 @@ Definition insert (x : nat) (v : value) (s : stack) : stack :=
   fun y => if Nat.eq_dec x y then v else s y.
 
 Definition mapsto (h : heap) (i : nat) (v : value) : Prop :=
-  match read h i with
+  match load h i with
   | None => False
   | Some v' => v = v'
   end.

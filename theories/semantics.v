@@ -30,27 +30,27 @@ Inductive eval_cmd : cmd -> state -> state -> Prop :=
   (h' , i) = newptr h ->
   s' = insert x (Some i) s ->
   eval_cmd (x <- alloc) <{s, h}> <{s', h'}>
-| EvalRead x e s s' h i v :
+| EvalLoad x e s s' h i v :
   isnat s e i ->
   mapsto h i v ->
   s' = insert x v s ->
   eval_cmd (x <- [ e ]) <{s, h}> <{s', h}>
-| EvalReadNull x e s h :
+| EvalLoadNull x e s h :
   eval_expr e s = None ->
   eval_cmd (x <- [ e ]) <{s, h}> err
-| EvalWrite e1 e2 s h h' i v :
+| EvalStore e1 e2 s h h' i v :
   isnat s e1 i ->
   eval_expr e2 s = v ->
   hasptr h i ->
-  h' = write h i v ->
+  h' = store h i v ->
   eval_cmd ([ e1 ] <- e2) <{s, h}> <{s, h'}>
-| EvalWriteNull e1 e2 s h :
+| EvalStoreNull e1 e2 s h :
   eval_expr e1 s = None ->
   eval_cmd ([ e1 ] <- e2) <{s, h}> err
 .
 
-Hint Resolve EvalAssume EvalNot EvalAssign EvalAlloc EvalRead
-  EvalReadNull EvalWrite EvalWriteNull : core.
+Hint Resolve EvalAssume EvalNot EvalAssign EvalAlloc EvalLoad
+  EvalLoadNull EvalStore EvalStoreNull : core.
 
 Reserved Notation "x ⇓ y" (at level 80).
 

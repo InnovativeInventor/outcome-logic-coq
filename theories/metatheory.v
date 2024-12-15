@@ -195,10 +195,8 @@ Proof.
   intros ? [σ [[s [h Heq]] Hequ]].
   exists <{insert x (eval_expr e s) s, h}>. split; simpgoal.
   - repeat eexists. destruct e as [x' | |].
-      * simpl. rewrite lookup_insert. unfold insert.
-        destruct (Nat.eq_dec x x'). all: eauto.
-      * rewrite lookup_insert. reflexivity.
-      * rewrite lookup_insert. reflexivity.
+    all: simpgoal'; rewrite lookup_insert; eauto.
+    unfold insert. destruct (Nat.eq_dec x x'). all: eauto.
   - repeat eexists; intros; simpgoal'.
     + apply Hequ in H. simpgoal'.
     + apply Hequ. reflexivity.
@@ -223,7 +221,7 @@ Proof.
       * eapply EvalCmd. eapply EvalAlloc; reflexivity.
 Qed.
 
-Lemma rule_write_ok_sound e1 e2 :
+Lemma rule_store_ok_sound e1 e2 :
   ⊨ ⟨ e1 --> - ⟩ [ e1 ] <- e2 ⟨ e1 --> e2 ⟩.
 Proof.
   intros ? [σ [[s [h [i [n [l H]]]]] Hequ]].
@@ -231,17 +229,17 @@ Proof.
   destruct H as [? [Heq [H1 H2]]].
   exists <{s , existT _ n (update l i v)}>. split.
   - repeat eexists; try eassumption.
-    unfold mapsto, read. rewrite find_update; eauto.
+    unfold mapsto, load. rewrite find_update; eauto.
   - intros σ'; split; intros Hin.
     + destruct Hin as [σ'' [Hin1 Hin2]]. apply Hequ in Hin1.
       rewrite <- Hin1 in *. simpgoal'; unfold isnat in *;
         destruct (eval_expr e1 s); try contradiction; simpgoal.
     + rewrite <- Hin. repeat eexists; simpgoal.
       * eapply Hequ. reflexivity.
-      * eapply EvalCmd. eapply EvalWrite; simpgoal.
+      * eapply EvalCmd. eapply EvalStore; simpgoal.
 Qed.
 
-Lemma rule_write_err_sound e1 e2 :
+Lemma rule_store_err_sound e1 e2 :
   ⊨ ⟨ e1 -/-> ⟩ [ e1 ] <- e2 ⟨ Err ⟩.
 Proof.
   intros ? [σ [[s [h [Heq Heq']]] Hequ]].
@@ -252,13 +250,50 @@ Proof.
   - repeat eexists.
     + apply Hequ. reflexivity.
     + simpgoal'. eapply EvalCmd.
-      eapply EvalWriteNull. assumption.
+      eapply EvalStoreNull. assumption.
+Qed.
+
+Lemma rule_load_ok_sound e e' x :
+  ⊨ ⟨ e --> e' ⟩ x <- [ e ] ⟨ x == e' ⟩.
+Proof.
+  intros ? [σ [[s [h [i [v H]]]] Hequ]].
+  destruct H as [Heq [H1 [Heq' H2]]]. simpgoal'.
+  remember (eval_expr e' s) as v.
+  exists <{ insert x v s , h }>.
+  eexists. eexists. eexists. eexists.
+  repeat split; try eauto.
+  - destruct e' as [x'| |]; simpgoal'; rewrite lookup_insert; eauto.
+    unfold insert. destruct (Nat.eq_dec x x'). all: eauto.
+  - intros σ'. split; intros H.
+    + destruct H as [σ'' [Hin Heval]].
+      apply Hequ in Hin. simpgoal'; unfold isnat, mapsto in *.
+      * destruct (eval_expr e s); try contradiction. simpgoal'.
+         destruct (load h n); try contradiction. simpgoal'.
+      * destruct (eval_expr e s); try contradiction. simpgoal'.
+    + repeat eexists; simpgoal'.
+      * apply Hequ. reflexivity.
+      * eapply EvalCmd. eapply EvalLoad; eauto.
+Qed.
+
+Lemma rule_load_err_sound e x :
+  ⊨ ⟨ e -/-> ⟩ x <- [ e ] ⟨ error ⟩.
+Proof.
+  intros ? [σ [[s [h [Heq Heq']]] Hequ]].
+  split; intros.
+  - simpgoal'; eauto. apply Hequ in H. simpgoal'.
+    unfold isnat in *. rewrite Heq' in *.
+    contradiction.
+  - repeat eexists.
+    + apply Hequ. reflexivity.
+    + simpgoal'. eapply EvalCmd.
+      eapply EvalLoadNull. assumption.
 Qed.
 
 Create HintDb atom_sound_lemmas.
 
-Hint Resolve rule_assign_sound rule_alloc_sound rule_write_ok_sound
-  rule_write_err_sound : atom_sound_lemmas.
+Hint Resolve rule_assign_sound rule_alloc_sound rule_store_ok_sound
+  rule_store_err_sound rule_load_ok_sound
+  rule_load_err_sound : atom_sound_lemmas.
 
 Lemma rules_atom_sound P c Q :
   ⊢atom ⟨ P ⟩ c ⟨ Q ⟩ ->

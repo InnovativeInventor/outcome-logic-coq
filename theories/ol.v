@@ -11,7 +11,7 @@ Inductive okprop : Type :=
 .
 
 Notation "'ok'" := OkTrue (at level 55).
-Notation "e --> v" := (MapsTo e v) (at level 55).
+Notation "e1 --> e2" := (MapsTo e1 e2) (at level 55).
 Notation "e --> -" := (Mapped e) (at level 55).
 Notation "e -/->" := (Unmapped e) (at level 55).
 Notation "x == e" := (Assigned x e) (at level 55).
@@ -20,6 +20,8 @@ Inductive prop : Type :=
 | Ok : okprop -> prop
 | Err : prop
 .
+
+Notation "'error'" := Err.
 
 Coercion Ok : okprop >-> prop.
 
@@ -133,10 +135,14 @@ Inductive rules_atom : prop -> cmd -> prop -> Prop :=
   ⊢atom ⟨ ok ⟩ x <- e ⟨ x == e ⟩
 | RuleAlloc x :
   ⊢atom ⟨ ok ⟩ x <- alloc ⟨ var x --> - ⟩
-| RuleWriteOk e1 e2 :
+| RuleStoreOk e1 e2 :
   ⊢atom ⟨ e1 --> - ⟩ [ e1 ] <- e2 ⟨ e1 --> e2 ⟩
-| RuleWriteErr e1 e2 :
-  ⊢atom ⟨ e1 -/-> ⟩ [ e1 ] <- e2 ⟨ Err ⟩
+| RuleStoreErr e1 e2 :
+  ⊢atom ⟨ e1 -/-> ⟩ [ e1 ] <- e2 ⟨ error ⟩
+| RuleLoadOk e e' x :
+  ⊢atom ⟨ e --> e' ⟩ x <- [ e ] ⟨ x == e' ⟩
+| RuleLoadErr x e :
+  ⊢atom ⟨ e -/-> ⟩ x <- [ e ] ⟨ error ⟩
 where "⊢atom ⟨ P ⟩ c ⟨ Q ⟩" := (rules_atom P c Q).
 
 Reserved Notation "⊢ ⟨ phi ⟩ C ⟨ psi ⟩".
