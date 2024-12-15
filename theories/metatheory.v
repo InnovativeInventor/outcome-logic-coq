@@ -382,6 +382,33 @@ Proof.
     apply H0.
 Qed.
 
+Lemma syntactic_to_semantic_triples_neg phi C psi phi_sem psi_sem :
+  (phi_sem = semantic_interpretation phi /\
+      psi_sem = semantic_interpretation psi) ->
+  ((⊭sem ⟨ phi_sem ⟩ C ⟨ psi_sem ⟩) <-> (⊭ ⟨ phi ⟩ C ⟨ psi ⟩)).
+Proof.
+  split.
+  * destruct H. intros.
+    unfold semantic_triple_neg in *.
+    unfold triple_neg in *.
+    destruct H1.
+    exists x.
+    destruct H1.
+    subst.
+    unfold semantic_interpretation in *.
+    split; auto.
+  * destruct H. intros.
+    unfold semantic_triple_neg in *.
+    unfold triple_neg in *.
+    destruct H1.
+    exists x.
+    destruct H1.
+    subst.
+    unfold semantic_interpretation in *.
+    split; auto.
+Defined.
+
+(* the above two proofs can probably be simplified *)
 
 Theorem principle_of_denial phi phi' C psi :
   ((forall m, (m ⊨ phi') -> (m ⊨ phi)) /\
@@ -393,4 +420,26 @@ Proof.
   destruct H.
   repeat destruct H0.
   epose proof (H _ H0).
+  remember (semantic_interpretation phi) as phi_sem.
+  remember (semantic_interpretation phi') as phi'_sem.
+  remember (semantic_interpretation psi) as psi_sem.
+  eapply (syntactic_to_semantic_triples_neg _ C _ phi_sem psi_sem); auto.
+  eapply (semantic_falsification phi_sem C psi_sem).
+  exists phi'_sem.
+  subst.
+  split.
+  * unfold subseteq.
+    intros.
+    unfold semantic_interpretation in *.
+    auto.
+  * split.
+    - exists x.
+      auto.
+    - eapply (syntactic_to_semantic_triples phi' C (psi ⇒ ⊥) (semantic_interpretation phi') (set_not (semantic_interpretation psi))).
+      split; auto.
+      unfold set_not.
+      unfold semantic_interpretation.
+      unfold not.
+      give_up.
+      apply H1.
 Admitted.
