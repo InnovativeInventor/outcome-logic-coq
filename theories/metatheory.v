@@ -408,7 +408,52 @@ Proof.
     split; auto.
 Defined.
 
-(* the above two proofs can probably be simplified *)
+
+(* Check semantic_interpretation. *)
+(* Definition extensional_equiv (f g : set (set state)) := *)
+(*   forall a, f a = g a. *)
+(* not sure how to use \equiv notation here*)
+
+Lemma syntactic_to_semantic_triples_ext phi C psi phi_sem psi_sem :
+  ((phi_sem ≡ (semantic_interpretation phi)) /\
+      (psi_sem ≡ (semantic_interpretation psi))) ->
+  ((⊨sem ⟨ phi_sem ⟩ C ⟨ psi_sem ⟩) <-> (⊨ ⟨ phi ⟩ C ⟨ psi ⟩)).
+Proof.
+  split.
+  * destruct H. intros.
+    unfold semantic_triple in *.
+    unfold triple in *.
+    intros.
+    specialize (H1 S).
+    unfold eq_set in *.
+    assert (S ∈ phi_sem).
+    {
+      unfold member.
+      eapply H.
+      unfold semantic_interpretation.
+      apply H2.
+    }
+    specialize (H1 H3).
+    unfold member in H1.
+    erewrite H0 in H1.
+    unfold semantic_interpretation in H1.
+    apply H1.
+  * intros.
+    destruct H.
+    unfold semantic_triple.
+    intros.
+    subst.
+    unfold triple in H0.
+    unfold eq_set in *.
+    specialize (H0 m).
+    unfold member in *.
+    erewrite H1.
+    erewrite H in H2.
+    unfold semantic_interpretation in *.
+    apply H0.
+    apply H2.
+Qed.
+(* the above few proofs can probably be simplified *)
 
 Theorem principle_of_denial phi phi' C psi :
   ((forall m, (m ⊨ phi') -> (m ⊨ phi)) /\
@@ -435,11 +480,30 @@ Proof.
   * split.
     - exists x.
       auto.
-    - eapply (syntactic_to_semantic_triples phi' C (psi ⇒ ⊥) (semantic_interpretation phi') (set_not (semantic_interpretation psi))).
-      split; auto.
-      unfold set_not.
-      unfold semantic_interpretation.
-      unfold not.
-      give_up.
-      apply H1.
-Admitted.
+    - eapply (syntactic_to_semantic_triples_ext phi' C (psi ⇒ ⊥) (semantic_interpretation phi') (set_not (semantic_interpretation psi))).
+      + split; auto.
+        ++ unfold set_not.
+           unfold semantic_interpretation.
+           unfold not.
+           unfold eq_set.
+           intros.
+           split;auto.
+        ++ unfold semantic_interpretation.
+           unfold set_not.
+           simpl.
+           unfold eq_set.
+           split.
+           +++ intros.
+               apply H3.
+               apply (eq_set_respects_sat S' x0).
+               split; apply H4.
+               apply H5.
+           +++ intros.
+               unfold not.
+               intros.
+               apply (H3 x0).
+               intros.
+               split; auto.
+               apply H4.
+      + apply H1.
+Qed.
