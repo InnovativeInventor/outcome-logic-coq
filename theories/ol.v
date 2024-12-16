@@ -29,7 +29,6 @@ Definition sat_atom (S : set state) (P : prop) : Prop :=
 Notation "S ⊨atom P" := (sat_atom S P) (at level 80).
 
 Reserved Notation "S ⊨ phi" (at level 80).
-Reserved Notation "S ⊨sem phi" (at level 80).
 
 (* Satisfiability of assertions *)
 Fixpoint sat (S : set state) (phi : assertion) : Prop :=
@@ -45,6 +44,7 @@ Fixpoint sat (S : set state) (phi : assertion) : Prop :=
   end
 where "S ⊨ phi" := (sat S phi).
 
+(* Set of possible states reachable from a program and a given state *)
 Definition outputs (C : cl) (σ : state) : set state :=
   fun σ' => (C , σ) ⇓ σ'.
 
@@ -67,7 +67,7 @@ Definition semantic_interpretation (phi : assertion) : set (set state) :=
 Definition semantic_sat (phi : set (set state)) : Prop :=
   exists x, x ∈ phi.
 
-Notation "m ⊨sem phi" := (semantic_sat m phi).
+Notation "m ⊨sem phi" := (semantic_sat m phi) (at level 80).
 
 Definition semantic_triple (phi : set (set state)) (C : cl) (psi : set (set state)) : Prop :=
   forall m, m ∈ phi -> (m >>= ⟦ C ⟧) ∈ psi.

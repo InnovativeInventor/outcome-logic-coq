@@ -1,5 +1,7 @@
 Require Import assertion ol syntax.
 
+(* Rules for deriving an outcome triple *)
+
 Reserved Notation "⊢atom ⟨ P ⟩ c ⟨ Q ⟩".
 
 Inductive rules_atom : prop -> cmd -> prop -> Prop :=
