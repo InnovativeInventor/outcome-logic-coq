@@ -1,5 +1,7 @@
 Require Import util.
 
+(* Set library *)
+
 Definition set (X : Type) := X -> Prop.
 
 Definition eq_set `{X : Type} (S1 : set X) (S2 : set X) : Prop :=
@@ -99,4 +101,3 @@ Hint Resolve eq_set_refl eq_set_trans eq_set_symm bind_ret_r bind_ret_l
   bind_assoc union_comm union_preserves_bind empty_cancels_bind : sets.
 
 Ltac solve_eq_set := repeat (progress simp_eq_set_goal; eauto with sets).
-

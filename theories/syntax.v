@@ -1,4 +1,4 @@
-(* expressions *)
+(* Expressions: variables, literals, and null *)
 Inductive expr : Type :=
 | Var : nat -> expr
 | Lit : nat -> expr
@@ -10,25 +10,25 @@ Notation "'null'" := Null.
 
 Coercion Lit : nat >-> expr.
 
-(* atomic commands *)
+(* Atomic commands: test expressions, read/write the stack/heap *)
 Inductive cmd : Type :=
 | Assume : expr -> cmd
 | Not : expr -> cmd
 | Assign : nat -> expr -> cmd
 | Alloc : nat -> cmd
-| Read : nat -> expr -> cmd
-| Write : expr -> expr -> cmd
+| Load : nat -> expr -> cmd
+| Store : expr -> expr -> cmd
 .
 
 Coercion Assume : expr >-> cmd.
 
 Notation "¬ e" := (Not e) (at level 35).
 Notation "x <- e" := (Assign x e) (at level 35).
-Notation "[ e1 ] <- e2" := (Write e1 e2) (at level 35).
-Notation "x <- [ e ]" := (Read x e) (at level 35).
+Notation "[ e1 ] <- e2" := (Store e1 e2) (at level 35).
+Notation "x <- [ e ]" := (Load x e) (at level 35).
 Notation "x <- 'alloc'" := (Alloc x) (at level 35).
 
-(* command language *)
+(* Command language: main language that programs are written in *)
 Inductive cl : Type :=
 | Zero
 | One
@@ -46,7 +46,7 @@ Notation "C ⋆" := (Star C) (at level 40).
 Notation "C1 + C2" := (Branch C1 C2).
 Notation "C1 ⨟ C2" := (Seq C1 C2) (at level 45).
 
-(* sugar for imperative programs *)
+(* Sugar for imperative programs *)
 
 Notation "x <- 'malloc'" := (x <- alloc + x <- null) (at level 35).
 

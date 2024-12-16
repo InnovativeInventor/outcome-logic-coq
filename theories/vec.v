@@ -1,6 +1,8 @@
 Require Import Lia.
 Require Import util.
 
+(* Vector library *)
+
 Fixpoint vec (n : nat) (A : Type) : Type :=
   match n with
   | O => unit

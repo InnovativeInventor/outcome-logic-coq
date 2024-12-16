@@ -14,6 +14,7 @@ Definition isnat (s : stack) (e : expr) (n : nat) : Prop :=
   | Some n' => n = n'
   end.
 
+(* Semantics of atomic commands *)
 Inductive eval_cmd : cmd -> state -> state -> Prop :=
 | EvalAssume e s h v :
   eval_expr e s = v ->
@@ -54,6 +55,7 @@ Hint Resolve EvalAssume EvalNot EvalAssign EvalAlloc EvalLoad
 
 Reserved Notation "x ⇓ y" (at level 80).
 
+(* Semantics of command language *)
 Inductive eval : (cl * state) -> state -> Prop :=
 | EvalOne σ : (𝟙 , σ) ⇓ σ
 | EvalSeq C1 C2 σ σ' σ'' :

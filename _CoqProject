@@ -3,8 +3,12 @@ theories/syntax.v
 theories/semantics.v
 theories/ol.v
 theories/metatheory.v
+theories/theorems.v
+theories/soundness.v
 theories/set.v
 theories/state.v
 theories/util.v
 theories/vec.v
+theories/assertion.v
+theories/rules.v
 examples/malloc.v

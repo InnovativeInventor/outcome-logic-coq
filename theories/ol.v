@@ -1,51 +1,9 @@
+Require Import assertion.
 Require Import semantics.
 Require Import set.
 Require Import vec.
 
-Inductive okprop : Type :=
-| OkTrue
-| MapsTo (e : expr) (e : expr)
-| Mapped (e : expr)
-| Unmapped (e : expr)
-| Assigned (x : nat) (e : expr)
-.
-
-Notation "'ok'" := OkTrue (at level 55).
-Notation "e1 --> e2" := (MapsTo e1 e2) (at level 55).
-Notation "e --> -" := (Mapped e) (at level 55).
-Notation "e -/->" := (Unmapped e) (at level 55).
-Notation "x == e" := (Assigned x e) (at level 55).
-
-Inductive prop : Type :=
-| Ok : okprop -> prop
-| Err : prop
-.
-
-Notation "'error'" := Err.
-
-Coercion Ok : okprop >-> prop.
-
-Inductive assertion : Type :=
-| Top : assertion
-| Bot : assertion
-| Diverge : assertion
-| And : assertion -> assertion -> assertion
-| Or : assertion -> assertion -> assertion
-| Conj : assertion -> assertion -> assertion
-| Impl : assertion -> assertion -> assertion
-| Atomic : prop -> assertion
-.
-
-Coercion Atomic : prop >-> assertion.
-
-Notation "⊤" := Top.
-Notation "⊥" := Bot.
-Notation "⊤⊕" := Diverge.
-Notation "phi ∧ psi" := (And phi psi) (at level 70).
-Notation "phi ∨ psi" := (Or phi psi) (at level 70).
-Notation "phi ⊕ psi" := (Conj phi psi) (at level 80).
-Notation "phi ⇒ psi" := (Impl phi psi) (at level 60).
-
+(* Satisfiability of a proposition for an 'ok' state *)
 Definition sat_state (σ : state) (P : okprop) : Prop :=
   match P with
   | OkTrue => exists s h, σ = <{s , h}>
@@ -61,6 +19,7 @@ Definition sat_state (σ : state) (P : okprop) : Prop :=
 
 Notation "σ ⊨state P" := (sat_state σ P) (at level 80).
 
+(* Satisfiability of propositions *)
 Definition sat_atom (S : set state) (P : prop) : Prop :=
   match P with
   | Err => S ≡ ret err
@@ -72,6 +31,7 @@ Notation "S ⊨atom P" := (sat_atom S P) (at level 80).
 Reserved Notation "S ⊨ phi" (at level 80).
 Reserved Notation "S ⊨sem phi" (at level 80).
 
+(* Satisfiability of assertions *)
 Fixpoint sat (S : set state) (phi : assertion) : Prop :=
   match phi with
   | ⊤ => True
@@ -90,6 +50,7 @@ Definition outputs (C : cl) (σ : state) : set state :=
 
 Notation "⟦ C ⟧" := (outputs C).
 
+(* Outcome logic triple *)
 Definition triple (phi : assertion) (C : cl) (psi : assertion) : Prop :=
   forall S, S ⊨ phi -> (S >>= ⟦ C ⟧) ⊨ psi.
 
@@ -118,62 +79,14 @@ Definition semantic_triple_neg (phi : set (set state)) (C : cl) (psi : set (set 
 
 Notation "⊭sem ⟨ phi ⟩ C ⟨ psi ⟩" := (semantic_triple_neg phi C psi).
 
+(* Underapproximation triple *)
 Definition underapprox (phi : assertion) (C : cl) (psi : assertion) : Prop :=
   triple phi C (psi ⊕ ⊤).
 
 Notation "⊨↓ ⟨ phi ⟩ C ⟨ psi ⟩" := (underapprox phi C psi).
 
+(* Partial correctness triple *)
 Definition pc (phi : assertion) (C : cl) (psi : assertion) : Prop :=
   triple phi C (psi ⊕ ⊤⊕).
 
 Notation "⊨pc ⟨ phi ⟩ C ⟨ psi ⟩" := (pc phi C psi).
-
-Reserved Notation "⊢atom ⟨ P ⟩ c ⟨ Q ⟩".
-
-Inductive rules_atom : prop -> cmd -> prop -> Prop :=
-| RuleAssign x e :
-  ⊢atom ⟨ ok ⟩ x <- e ⟨ x == e ⟩
-| RuleAlloc x :
-  ⊢atom ⟨ ok ⟩ x <- alloc ⟨ var x --> - ⟩
-| RuleStoreOk e1 e2 :
-  ⊢atom ⟨ e1 --> - ⟩ [ e1 ] <- e2 ⟨ e1 --> e2 ⟩
-| RuleStoreErr e1 e2 :
-  ⊢atom ⟨ e1 -/-> ⟩ [ e1 ] <- e2 ⟨ error ⟩
-| RuleLoadOk e e' x :
-  ⊢atom ⟨ e --> e' ⟩ x <- [ e ] ⟨ x == e' ⟩
-| RuleLoadErr x e :
-  ⊢atom ⟨ e -/-> ⟩ x <- [ e ] ⟨ error ⟩
-where "⊢atom ⟨ P ⟩ c ⟨ Q ⟩" := (rules_atom P c Q).
-
-Reserved Notation "⊢ ⟨ phi ⟩ C ⟨ psi ⟩".
-
-Inductive rules : assertion -> cl -> assertion -> Prop :=
-| RuleZero phi : ⊢ ⟨ phi ⟩ 𝟘 ⟨ ⊤⊕ ⟩
-| RuleOne phi : ⊢ ⟨ phi ⟩ 𝟙 ⟨ phi ⟩
-| RuleSeq phi psi theta C1 C2 :
-  ⊢ ⟨ phi ⟩ C1 ⟨ psi ⟩ ->
-  ⊢ ⟨ psi ⟩ C2 ⟨ theta ⟩ ->
-  ⊢ ⟨ phi ⟩ C1 ⨟ C2 ⟨ theta ⟩
-| RuleSplit phi1 psi1 phi2 psi2 C :
-  ⊢ ⟨ phi1 ⟩ C ⟨ psi1 ⟩ ->
-  ⊢ ⟨ phi2 ⟩ C ⟨ psi2 ⟩ ->
-  ⊢ ⟨ phi1 ⊕ phi2 ⟩ C ⟨ psi1 ⊕ psi2 ⟩
-| RuleConsequence phi phi' psi psi' C :
-  (forall S, S ⊨ phi' ⇒ phi) ->
-  ⊢ ⟨ phi ⟩ C ⟨ psi ⟩ ->
-  (forall S, S ⊨ psi ⇒ psi') ->
-  ⊢ ⟨ phi' ⟩ C ⟨ psi' ⟩
-| RuleEmpty C : ⊢ ⟨ ⊤⊕ ⟩ C ⟨ ⊤⊕ ⟩
-| RuleTrue phi C : ⊢ ⟨ phi ⟩ C ⟨ ⊤ ⟩
-| RuleFalse C phi : ⊢ ⟨ ⊥ ⟩ C ⟨ phi ⟩
-| RulePlus phi psi1 psi2 C1 C2 :
-  ⊢ ⟨ phi ⟩ C1 ⟨ psi1 ⟩ ->
-  ⊢ ⟨ phi ⟩ C2 ⟨ psi2 ⟩ ->
-  ⊢ ⟨ phi ⟩ C1 + C2 ⟨ psi1 ⊕ psi2 ⟩
-| RuleInduction phi psi C :
-  ⊢ ⟨ phi ⟩ 𝟙 + C ⨟ C ⋆ ⟨ psi ⟩ ->
-  ⊢ ⟨ phi ⟩ C ⋆ ⟨ psi ⟩
-| RuleCmd P Q c :
-  ⊢atom ⟨ P ⟩ c ⟨ Q ⟩ ->
-  ⊢ ⟨ P ⟩ c ⟨ Q ⟩
-where "⊢ ⟨ phi ⟩ C ⟨ psi ⟩" := (rules phi C psi).
