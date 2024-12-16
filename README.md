@@ -9,8 +9,8 @@ operational semantics instead of a denotational semantics and fix our execution 
 to the powerset monad.
 
 Our main results are in [`theorems.v`](theories/theorems.v), we mechanized the
-soundness of OL's proof rules, the equivalence of syntactic and semantic outcome
-triples, as well as the principle of denial.
+soundness of OL's proof rules, semantic falsification, the equivalence of 
+syntactic and semantic outcome triples, as well as the principle of denial.
 
 We also have an example of our framework in use in
 [`malloc.v`](examples/malloc.v), where we prove the specificiation of a simple
