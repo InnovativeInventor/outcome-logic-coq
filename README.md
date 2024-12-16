@@ -3,10 +3,10 @@
 
 summary
 ---
-This repo contains an encoding of Outcome Logic in Coq. We depart from the
-original paper in two significant ways: we use a big-step operational semantics
-instead of a denotational semantics and fix our execution model to the powerset
-monad.
+This repo contains an encoding of [Outcome Logic](https://dl.acm.org/doi/10.1145/3586045)
+in Coq. We depart from the original paper in two significant ways: we use a big-step
+operational semantics instead of a denotational semantics and fix our execution model
+to the powerset monad.
 
 Our main results are in [`theorems.v`](theories/theorems.v), we mechanized the
 soundness of OL's proof rules, the equivalence of syntactic and semantic outcome
