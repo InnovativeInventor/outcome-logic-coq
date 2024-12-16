@@ -1,4 +1,4 @@
-Require Import assertion metatheory ol rules semantics set util vec.
+Require Import assertion lemmas ol rules semantics set util vec.
 
 (* Soundness of outcome logic proof rules *)
 

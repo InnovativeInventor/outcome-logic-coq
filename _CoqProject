@@ -2,7 +2,7 @@
 theories/syntax.v
 theories/semantics.v
 theories/ol.v
-theories/metatheory.v
+theories/lemmas.v
 theories/theorems.v
 theories/soundness.v
 theories/set.v
