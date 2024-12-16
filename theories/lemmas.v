@@ -91,82 +91,12 @@ Proof.
     + intros Hin. apply Hsat. apply Hin.
 Qed.
 
-Theorem semantic_falsification phi C psi :
-  ((⊭sem ⟨ phi ⟩ C ⟨ psi ⟩))
-      <->
-  (exists phi',
-    (phi' ⊆ phi) /\ (semantic_sat phi') /\ (semantic_triple phi' C (set_not psi ))).
-Proof.
-  split; intros.
-  * unfold semantic_triple_neg in H.
-    repeat destruct H.
-    exists (ret x).
-    split; try split.
-    + unfold ret.
-      unfold subseteq.
-      intros.
-      subst.
-      apply H.
-    + unfold semantic_sat.
-      exists x.
-      unfold ret.
-      unfold member.
-      auto.
-    + unfold semantic_triple.
-      intros.
-      unfold member in *.
-      unfold ret in *.
-      subst.
-      auto.
-  * repeat destruct H.
-    destruct H0.
-    unfold semantic_sat in H0.
-    destruct H0.
-    unfold semantic_triple_neg.
-    unfold semantic_triple in H1.
-    exists x0.
-    specialize (H x0 H0).
-    split; auto.
-Qed.
-
-Lemma syntactic_to_semantic_triples phi C psi phi_sem psi_sem :
-  (phi_sem = semantic_interpretation phi /\
-      psi_sem = semantic_interpretation psi) ->
-  ((⊨sem ⟨ phi_sem ⟩ C ⟨ psi_sem ⟩) <-> (⊨ ⟨ phi ⟩ C ⟨ psi ⟩)).
-Proof.
-  split.
-  * destruct H. intros.
-    unfold semantic_triple in *.
-    unfold triple in *.
-    intros.
-    specialize (H1 S).
-    assert (S ∈ phi_sem).
-    {
-      unfold member.
-      rewrite H.
-      unfold semantic_interpretation.
-      apply H2.
-    }
-    specialize (H1 H3).
-    unfold member in H1.
-    rewrite H0 in H1.
-    unfold semantic_interpretation in H1.
-    apply H1.
-  * intros.
-    destruct H.
-    unfold semantic_triple.
-    intros.
-    subst.
-    unfold triple in H0.
-    specialize (H0 m H2).
-    apply H0.
-Qed.
-
 Lemma syntactic_to_semantic_triples_neg phi C psi phi_sem psi_sem :
   (phi_sem = semantic_interpretation phi /\
       psi_sem = semantic_interpretation psi) ->
   ((⊭sem ⟨ phi_sem ⟩ C ⟨ psi_sem ⟩) <-> (⊭ ⟨ phi ⟩ C ⟨ psi ⟩)).
 Proof.
+  intros.
   split.
   * destruct H. intros.
     unfold semantic_triple_neg in *.
@@ -187,12 +117,6 @@ Proof.
     unfold semantic_interpretation in *.
     split; auto.
 Defined.
-
-
-(* Check semantic_interpretation. *)
-(* Definition extensional_equiv (f g : set (set state)) := *)
-(*   forall a, f a = g a. *)
-(* not sure how to use \equiv notation here*)
 
 Lemma syntactic_to_semantic_triples_ext phi C psi phi_sem psi_sem :
   ((phi_sem ≡ (semantic_interpretation phi)) /\
@@ -235,55 +159,3 @@ Proof.
 Qed.
 (* the above few proofs can probably be simplified *)
 
-Theorem principle_of_denial phi phi' C psi :
-  ((forall m, (m ⊨ phi') -> (m ⊨ phi)) /\
-    exists m, m ⊨ phi' /\
-    ⊨ ⟨ phi' ⟩ C ⟨ psi ⇒ ⊥ ⟩ ) ->
-  ⊭  ⟨ phi ⟩ C ⟨ psi ⟩.
-Proof.
-  intros.
-  destruct H.
-  repeat destruct H0.
-  epose proof (H _ H0).
-  remember (semantic_interpretation phi) as phi_sem.
-  remember (semantic_interpretation phi') as phi'_sem.
-  remember (semantic_interpretation psi) as psi_sem.
-  eapply (syntactic_to_semantic_triples_neg _ C _ phi_sem psi_sem); auto.
-  eapply (semantic_falsification phi_sem C psi_sem).
-  exists phi'_sem.
-  subst.
-  split.
-  * unfold subseteq.
-    intros.
-    unfold semantic_interpretation in *.
-    auto.
-  * split.
-    - exists x.
-      auto.
-    - eapply (syntactic_to_semantic_triples_ext phi' C (psi ⇒ ⊥) (semantic_interpretation phi') (set_not (semantic_interpretation psi))).
-      + split; auto.
-        ++ unfold set_not.
-           unfold semantic_interpretation.
-           unfold not.
-           unfold eq_set.
-           intros.
-           split;auto.
-        ++ unfold semantic_interpretation.
-           unfold set_not.
-           simpl.
-           unfold eq_set.
-           split.
-           +++ intros.
-               apply H3.
-               apply (eq_set_respects_sat S' x0).
-               split; apply H4.
-               apply H5.
-           +++ intros.
-               unfold not.
-               intros.
-               apply (H3 x0).
-               intros.
-               split; auto.
-               apply H4.
-      + apply H1.
-Qed.

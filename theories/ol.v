@@ -64,15 +64,15 @@ Notation "⊭ ⟨ phi ⟩ C ⟨ psi ⟩" := (triple_neg phi C psi).
 Definition semantic_interpretation (phi : assertion) : set (set state) :=
   fun x => sat x phi.
 
-Definition semantic_sat (phi : set (set state)) : Prop :=
-  exists x, x ∈ phi.
-
-Notation "m ⊨sem phi" := (semantic_sat m phi) (at level 80).
-
 Definition semantic_triple (phi : set (set state)) (C : cl) (psi : set (set state)) : Prop :=
   forall m, m ∈ phi -> (m >>= ⟦ C ⟧) ∈ psi.
 
-Notation "⊨sem ⟨ phi ⟩ C ⟨ psi ⟩" := (semantic_triple phi C psi).
+Notation "⊨sem ⟨ phi ⟩ C ⟨ psi ⟩" := (semantic_triple phi C psi) (at level 90).
+
+Definition semantic_sat (phi : set (set state)) : Prop :=
+  exists x, x ∈ phi.
+
+Notation "⊨sem phi" := (semantic_sat phi) (at level 80).
 
 Definition semantic_triple_neg (phi : set (set state)) (C : cl) (psi : set (set state)) : Prop :=
   exists m, m ∈ phi /\ (m >>= ⟦ C ⟧) ∈ (set_not psi).
