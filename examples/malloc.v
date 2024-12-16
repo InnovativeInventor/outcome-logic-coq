@@ -3,13 +3,13 @@ From OLCoq Require Import assertion metatheory ol rules semantics set syntax the
 (* Program with a potential null dereference memory error *)
 Example program x :=
       x <- malloc ⨟
-      [ var x ] <- 1
+      [ x ] <- 1
 .
 
 (* Proof using outcome logic that the program may have a
    null dereference memory error *)
 Example has_potential_memory_error x :
-  ⊢ ⟨ ok ⟩ program x ⟨ var x --> 1 ⊕ Err ⟩.
+  ⊢ ⟨ ok ⟩ program x ⟨ x --> 1 ⊕ Err ⟩.
 Proof.
   eapply RuleSeq.
   - eapply RulePlus.

@@ -18,16 +18,16 @@ Definition is_false (v : value) : Prop :=
   end.
 
 (* The local stack + associated operations/lemmas *)
-Definition stack := nat -> value.
+Definition stack := string -> value.
 
 Definition empty_stack : stack := fun _ => None.
 
-Definition insert (x : nat) (v : value) (s : stack) : stack :=
-  fun y => if Nat.eq_dec x y then v else s y.
+Definition insert (x : string) (v : value) (s : stack) : stack :=
+  fun y => if string_dec x y then v else s y.
 
 Lemma lookup_insert x v s : (insert x v s) x = v.
 Proof.
-  intros. unfold insert. destruct (Nat.eq_dec x x); congruence.
+  intros. unfold insert. destruct (string_dec x x); congruence.
 Qed.
 
 (* The heap + associated operations/lemmas *)

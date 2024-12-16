@@ -1,22 +1,23 @@
+From Coq Require Export Strings.String.
+
 (* Expressions: variables, literals, and null *)
 Inductive expr : Type :=
-| Var : nat -> expr
+| Var : string -> expr
 | Lit : nat -> expr
 | Null : expr
 .
 
-Notation "'var' x" := (Var x) (at level 30).
 Notation "'null'" := Null.
-
 Coercion Lit : nat >-> expr.
+Coercion Var : string >-> expr.
 
 (* Atomic commands: test expressions, read/write the stack/heap *)
 Inductive cmd : Type :=
 | Assume : expr -> cmd
 | Not : expr -> cmd
-| Assign : nat -> expr -> cmd
-| Alloc : nat -> cmd
-| Load : nat -> expr -> cmd
+| Assign : string -> expr -> cmd
+| Alloc : string -> cmd
+| Load : string -> expr -> cmd
 | Store : expr -> expr -> cmd
 .
 

@@ -6,7 +6,7 @@ Inductive okprop : Type :=
 | MapsTo (e : expr) (e : expr)
 | Mapped (e : expr)
 | Unmapped (e : expr)
-| Assigned (x : nat) (e : expr)
+| Assigned (x : string) (e : expr)
 .
 
 Notation "'ok'" := OkTrue (at level 55).

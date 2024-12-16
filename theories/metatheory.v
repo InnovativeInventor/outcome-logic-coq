@@ -81,7 +81,7 @@ Proof.
   - eapply eq_set_respects_sat_atom; eauto.
 Qed.
 
-Lemma null_implies_unmapped x S : S ⊨ x == null ⇒ (var x) -/->.
+Lemma null_implies_unmapped x S : S ⊨ x == null ⇒ x -/->.
 Proof.
   intros S' Heq [σ [Hin Hsat]]. unfold sat, sat_atom, sat_state in *.
   exists σ. split.

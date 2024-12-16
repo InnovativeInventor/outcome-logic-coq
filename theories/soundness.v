@@ -107,7 +107,7 @@ Proof.
   exists <{insert x (eval_expr e s) s, h}>. split; simpgoal.
   - repeat eexists. destruct e as [x' | |].
     all: simpgoal'; rewrite lookup_insert; eauto.
-    unfold insert. destruct (Nat.eq_dec x x'). all: eauto.
+    unfold insert. destruct (string_dec x x'). all: eauto.
   - repeat eexists; intros; simpgoal'.
     + apply Hequ in H. simpgoal'.
     + apply Hequ. reflexivity.
@@ -115,7 +115,7 @@ Proof.
 Qed.
 
 Lemma rule_alloc_sound x :
-  ⊨ ⟨ ok ⟩ x <- alloc ⟨ var x --> - ⟩.
+  ⊨ ⟨ ok ⟩ x <- alloc ⟨ x --> - ⟩.
 Proof.
   intros ? [σ [[s [h Heq]] Hequ]].
   destruct h as [n l].
@@ -174,7 +174,7 @@ Proof.
   eexists. eexists. eexists. eexists.
   repeat split; try eauto.
   - destruct e' as [x'| |]; simpgoal'; rewrite lookup_insert; eauto.
-    unfold insert. destruct (Nat.eq_dec x x'). all: eauto.
+    unfold insert. destruct (string_dec x x'). all: eauto.
   - intros σ'. split; intros H.
     + destruct H as [σ'' [Hin Heval]].
       apply Hequ in Hin. simpgoal'; unfold isnat, mapsto in *.

@@ -14,7 +14,7 @@ Definition sat_state (σ : state) (P : okprop) : Prop :=
       exists s h i n (l : vec n value), σ = <{s, h}> /\ h = existT _ n l /\ isnat s e i /\ i < n
   | e -/-> => exists s h, σ = <{s, h}> /\ eval_expr e s = None
   | x == e =>
-      exists s h v, σ = <{s, h}> /\ eval_expr e s = v /\ eval_expr (var x) s = v
+      exists s h v, σ = <{s, h}> /\ eval_expr e s = v /\ eval_expr x s = v
   end.
 
 Notation "σ ⊨state P" := (sat_state σ P) (at level 80).

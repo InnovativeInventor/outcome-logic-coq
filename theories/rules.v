@@ -8,7 +8,7 @@ Inductive rules_atom : prop -> cmd -> prop -> Prop :=
 | RuleAssign x e :
   ⊢atom ⟨ ok ⟩ x <- e ⟨ x == e ⟩
 | RuleAlloc x :
-  ⊢atom ⟨ ok ⟩ x <- alloc ⟨ var x --> - ⟩
+  ⊢atom ⟨ ok ⟩ x <- alloc ⟨ x --> - ⟩
 | RuleStoreOk e1 e2 :
   ⊢atom ⟨ e1 --> - ⟩ [ e1 ] <- e2 ⟨ e1 --> e2 ⟩
 | RuleStoreErr e1 e2 :
